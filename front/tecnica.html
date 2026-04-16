@@ -281,10 +281,73 @@
 </main>
 <!-- BEGIN: Script for Interactivity -->
 <script data-purpose="form-logic">
-    // Auth guard
-    (function () {
+    // Auth guard + Draft Resume
+    (async function () {
         const session = localStorage.getItem('session');
         const beneficiarioIdRaw = parseInt(localStorage.getItem('beneficiario_id'), 10);
+        const solicitudId = localStorage.getItem('solicitud_id');
+
+        // Check if we have a draft to resume
+        if (solicitudId) {
+            try {
+                const res = await fetch(`/api/solicitudes/${solicitudId}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Pre-fill form fields
+                    const setVal = (name, val) => {
+                        const el = document.querySelector(`[name="${name}"]`);
+                        if (el && val != null) el.value = val;
+                    };
+
+                    // Set select fields
+                    setVal('entorno', data.entorno);
+                    setVal('control_tronco', data.control_tronco);
+                    setVal('control_cabeza', data.control_cabeza);
+
+                    // Set textarea
+                    setVal('observaciones_posturales', data.observaciones_posturales);
+
+                    // Set numeric fields
+                    setVal('altura_total_in', data.altura_total_in);
+                    setVal('peso_kg', data.peso_kg);
+                    setVal('medida_cabeza_asiento', data.medida_cabeza_asiento);
+                    setVal('medida_hombro_asiento', data.medida_hombro_asiento);
+                    setVal('medida_prof_asiento', data.medida_prof_asiento);
+                    setVal('medida_rodilla_talon', data.medida_rodilla_talon);
+                    setVal('medida_ancho_cadera', data.medida_ancho_cadera);
+
+                    // Set text fields
+                    setVal('entidad_solicitante', data.entidad_solicitante);
+                    setVal('justificacion', data.justificacion);
+
+                    // Set priority radio button
+                    if (data.prioridad) {
+                        const prioridadRadio = document.querySelector(`[name="prioridad"][value="${data.prioridad}"]`);
+                        if (prioridadRadio) prioridadRadio.checked = true;
+                    }
+
+                    // Store beneficiario_id if present
+                    if (data.beneficiario_id) {
+                        localStorage.setItem('beneficiario_id', data.beneficiario_id);
+                    }
+
+                    // We've restored the draft, continue with the form
+                    return;
+                } else if (res.status === 404) {
+                    // Draft was deleted, clear the localStorage
+                    localStorage.removeItem('solicitud_id');
+                }
+            } catch (err) {
+                // Network error, show fresh form
+                console.error('Error loading draft:', err);
+            }
+        }
+
+        // Standard auth check for new submissions
         if (!session || !beneficiarioIdRaw || isNaN(beneficiarioIdRaw)) {
             window.location.href = 'login.html';
         }
@@ -296,7 +359,7 @@
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) return null;
         const formData = new FormData();
         formData.append('foto', fileInput.files[0]);
-        const res = await fetch('http://localhost:8001/api/upload-foto', {
+        const res = await fetch('/api/upload-foto', {
             method: 'POST',
             body: formData
         });
@@ -312,6 +375,7 @@
 
         const session = JSON.parse(localStorage.getItem('session'));
         const beneficiarioId = parseInt(localStorage.getItem('beneficiario_id'), 10);
+        const solicitudId = localStorage.getItem('solicitud_id');
         const f = document.querySelector('form');
         const fd = new FormData(f);
         const get = (name) => fd.get(name) || '';
@@ -322,9 +386,12 @@
         try {
             foto_url = await uploadFoto(fileInput);
         } catch (err) {
-            errorEl.textContent = err.message || 'Error al subir la foto.';
-            errorEl.classList.remove('hidden');
-            return;
+            // Photo upload is optional for borrador
+            if (status === 'completo') {
+                errorEl.textContent = err.message || 'Error al subir la foto.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
         }
 
         const payload = {
@@ -349,24 +416,63 @@
         };
 
         try {
-            const res = await fetch('http://localhost:8001/api/solicitudes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let res, data;
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                errorEl.textContent = data.detail || 'Error al guardar la solicitud. Intente de nuevo.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
+            if (solicitudId) {
+                // PATCH existing draft
+                res = await fetch(`/api/solicitudes/${solicitudId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-            if (status === 'completo') {
-                localStorage.removeItem('beneficiario_id');
-                window.location.href = 'socioeconomico.html';
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    errorEl.textContent = errData.detail || 'Error al actualizar la solicitud. Intente de nuevo.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                data = await res.json();
+
+                if (status === 'completo') {
+                    localStorage.removeItem('estudio_id');
+                    localStorage.removeItem('solicitud_id');
+                    localStorage.removeItem('beneficiario_id');
+                    window.location.href = 'socioeconomico.html';
+                } else {
+                    alert('Borrador guardado correctamente.');
+                }
             } else {
-                alert('Borrador guardado correctamente.');
+                // POST new solicitud
+                res = await fetch('/api/solicitudes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    errorEl.textContent = errData.detail || 'Error al guardar la solicitud. Intente de nuevo.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                data = await res.json();
+
+                // Store solicitud_id for future PATCHes
+                if (data.solicitud_id) {
+                    localStorage.setItem('solicitud_id', data.solicitud_id);
+                }
+
+                if (status === 'completo') {
+                    localStorage.removeItem('estudio_id');
+                    localStorage.removeItem('solicitud_id');
+                    localStorage.removeItem('beneficiario_id');
+                    window.location.href = 'socioeconomico.html';
+                } else {
+                    alert('Borrador guardado correctamente.');
+                }
             }
         } catch (err) {
             errorEl.textContent = 'No se pudo conectar con el servidor.';

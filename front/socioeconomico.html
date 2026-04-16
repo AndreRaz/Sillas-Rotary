@@ -239,11 +239,92 @@
 </form>
 </main>
 <script data-purpose="form-logic">
-    // Auth guard
-    (function () {
+    // Auth guard + Draft Resume
+    (async function () {
         const session = localStorage.getItem('session');
         if (!session) {
             window.location.href = 'login.html';
+            return;
+        }
+
+        // Draft Resume: Check if we have an estudio_id to restore
+        const estudioId = localStorage.getItem('estudio_id');
+        if (estudioId) {
+            try {
+                const res = await fetch(`/api/estudios/${estudioId}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Pre-fill beneficiario fields
+                    if (data.beneficiario) {
+                        const b = data.beneficiario;
+                        const setVal = (name, val) => {
+                            const el = document.querySelector(`[name="${name}"]`);
+                            if (el && val != null) el.value = val;
+                        };
+                        setVal('nombre', b.nombre);
+                        setVal('fecha_nacimiento', b.fecha_nacimiento);
+                        setVal('diagnostico', b.diagnostico);
+                        setVal('calle', b.calle);
+                        setVal('colonia', b.colonia);
+                        setVal('ciudad', b.ciudad);
+                        setVal('telefonos', b.telefonos);
+                    }
+
+                    // Pre-fill tutores
+                    if (data.tutores && data.tutores.length > 0) {
+                        data.tutores.forEach(t => {
+                            const num = t.numero_tutor;
+                            const setVal = (name, val) => {
+                                const el = document.querySelector(`[name="${name}"]`);
+                                if (el && val != null) el.value = val;
+                            };
+                            const setChecked = (name, val) => {
+                                const el = document.querySelector(`[name="${name}"]`);
+                                if (el) el.checked = val === 1 || val === true;
+                            };
+                            setVal(`tutor${num}_nombre`, t.nombre);
+                            setVal(`tutor${num}_edad`, t.edad);
+                            setVal(`tutor${num}_nivel_estudios`, t.nivel_estudios);
+                            setVal(`tutor${num}_estado_civil`, t.estado_civil);
+                            setVal(`tutor${num}_num_hijos`, t.num_hijos);
+                            setVal(`tutor${num}_vivienda`, t.vivienda);
+                            setVal(`tutor${num}_fuente_empleo`, t.fuente_empleo);
+                            setVal(`tutor${num}_antiguedad`, t.antiguedad);
+                            setVal(`tutor${num}_ingreso_mensual`, t.ingreso_mensual);
+                            setChecked(`tutor${num}_imss`, t.tiene_imss);
+                            setChecked(`tutor${num}_infonavit`, t.tiene_infonavit);
+                        });
+                    }
+
+                    // Pre-fill estudio closing fields
+                    const setVal = (name, val) => {
+                        const el = document.querySelector(`[name="${name}"]`);
+                        if (el && val != null) el.value = val;
+                    };
+                    setVal('otras_fuentes_ingreso', data.otras_fuentes_ingreso);
+                    setVal('monto_otras_fuentes', data.monto_otras_fuentes);
+                    setVal('silla_previa', data.tuvo_silla_previa === 1 ? 'Sí' : 'No');
+                    setVal('como_obtuvo_silla', data.como_obtuvo_silla);
+                    setVal('elaboro_estudio', data.elaboro_estudio);
+                    setVal('fecha_estudio', data.fecha_estudio);
+                    setVal('sede', data.sede);
+
+                    // Also store beneficiario_id from the draft
+                    if (data.beneficiario_id) {
+                        localStorage.setItem('beneficiario_id', data.beneficiario_id);
+                    }
+                } else if (res.status === 404) {
+                    // Draft was deleted, clear the localStorage
+                    localStorage.removeItem('estudio_id');
+                }
+            } catch (err) {
+                // Network error, show fresh form
+                console.error('Error loading draft:', err);
+            }
         }
     })();
 
@@ -252,6 +333,7 @@
         if (confirm('¿Cerrar sesión y cambiar de capturista?')) {
             localStorage.removeItem('session');
             localStorage.removeItem('beneficiario_id');
+            localStorage.removeItem('estudio_id');
             window.location.href = 'login.html';
         }
     });
@@ -330,25 +412,90 @@
         errorEl.classList.add('hidden');
         errorEl.textContent = '';
 
-        const payload = getFormData(status);
+        const estudioId = localStorage.getItem('estudio_id');
 
         try {
-            const res = await fetch('http://localhost:8001/api/estudios', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let res, data;
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                errorEl.textContent = data.detail || 'Error al guardar el estudio. Intente de nuevo.';
-                errorEl.classList.remove('hidden');
-                return;
+            if (estudioId) {
+                // PATCH existing draft - send flat update with only estudio fields
+                const f = document.querySelector('form');
+                const fd = new FormData(f);
+                const get = (name) => fd.get(name) || '';
+
+                const toFloatOrNull = (v) => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+
+                const patchPayload = {
+                    otras_fuentes_ingreso: get('otras_fuentes_ingreso'),
+                    monto_otras_fuentes: toFloatOrNull(get('monto_otras_fuentes')),
+                    tuvo_silla_previa: get('silla_previa') === 'Sí' ? 1 : 0,
+                    como_obtuvo_silla: get('como_obtuvo_silla'),
+                    elaboro_estudio: get('elaboro_estudio'),
+                    fecha_estudio: get('fecha_estudio'),
+                    sede: get('sede'),
+                    status
+                };
+
+                res = await fetch(`/api/estudios/${estudioId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(patchPayload)
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    errorEl.textContent = errData.detail || 'Error al actualizar el estudio. Intente de nuevo.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                data = await res.json();
+
+                // After successful PATCH with status 'completo', clear estudio_id (not resumable)
+                // but keep beneficiario_id for tecnica.html
+                if (status === 'completo') {
+                    localStorage.removeItem('estudio_id');
+                    window.location.href = 'tecnica.html';
+                } else {
+                    alert('Borrador guardado correctamente.');
+                }
+            } else {
+                // POST new estudio
+                const payload = getFormData(status);
+
+                res = await fetch('/api/estudios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    errorEl.textContent = errData.detail || 'Error al guardar el estudio. Intente de nuevo.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                data = await res.json();
+
+                // Store IDs for later use
+                if (data.estudio_id) {
+                    localStorage.setItem('estudio_id', data.estudio_id);
+                }
+                if (data.beneficiario_id) {
+                    localStorage.setItem('beneficiario_id', data.beneficiario_id);
+                }
+
+                if (status === 'completo') {
+                    // Estudio completed — clear estudio_id (not resumable)
+                    // but keep beneficiario_id for tecnica.html
+                    localStorage.removeItem('estudio_id');
+                    window.location.href = 'tecnica.html';
+                } else {
+                    // Borrador saved — keep both IDs for later resumption
+                    alert('Borrador guardado correctamente.');
+                }
             }
-
-            const data = await res.json();
-            localStorage.setItem('beneficiario_id', data.beneficiario_id);
-            window.location.href = 'tecnica.html';
         } catch (err) {
             errorEl.textContent = 'No se pudo conectar con el servidor.';
             errorEl.classList.remove('hidden');

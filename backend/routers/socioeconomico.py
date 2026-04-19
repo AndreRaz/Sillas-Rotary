@@ -202,7 +202,7 @@ def crear_estudio(
             usuario.usuario_id,
             estudio.otras_fuentes_ingreso,
             estudio.monto_otras_fuentes,
-            estudio.tuvo_silla_previa,
+            int(estudio.tuvo_silla_previa) if estudio.tuvo_silla_previa is not None else None,
             estudio.como_obtuvo_silla,
             estudio.elaboro_estudio,
             estudio.fecha_estudio,

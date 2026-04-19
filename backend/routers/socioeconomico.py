@@ -181,8 +181,8 @@ def crear_estudio(
                 tutor.fuente_empleo or None,
                 tutor.antiguedad or None,
                 tutor.ingreso_mensual,
-                tutor.tiene_imss,
-                tutor.tiene_infonavit,
+                int(tutor.tiene_imss),
+                int(tutor.tiene_infonavit),
             ),
         )
 

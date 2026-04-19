@@ -357,6 +357,8 @@
 
     async function uploadFoto(fileInput) {
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) return null;
+        const session = JSON.parse(localStorage.getItem('session') || 'null');
+        if (!session?.token) throw new Error('Sesión no válida.');
         const formData = new FormData();
         formData.append('foto', fileInput.files[0]);
         const res = await fetch('/api/upload-foto', {
@@ -373,6 +375,12 @@
         const errorEl = document.getElementById('error-msg');
         errorEl.classList.add('hidden');
         errorEl.textContent = '';
+
+        const session = JSON.parse(localStorage.getItem('session') || 'null');
+        if (!session?.token) {
+            window.location.href = 'login.html';
+            return;
+        }
 
         const beneficiarioId = parseInt(localStorage.getItem('beneficiario_id'), 10);
         const solicitudId = localStorage.getItem('solicitud_id');

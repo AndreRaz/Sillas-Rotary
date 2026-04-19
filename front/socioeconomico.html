@@ -341,6 +341,7 @@
     });
 
     function getFormData(status) {
+        const regionCtx = JSON.parse(localStorage.getItem('region_ctx') || 'null');
         const f = document.querySelector('form');
         const fd = new FormData(f);
         const get = (name) => fd.get(name) || '';
@@ -411,6 +412,12 @@
         const errorEl = document.getElementById('error-msg');
         errorEl.classList.add('hidden');
         errorEl.textContent = '';
+
+        const session = JSON.parse(localStorage.getItem('session') || 'null');
+        if (!session?.token) {
+            window.location.href = 'login.html';
+            return;
+        }
 
         const estudioId = localStorage.getItem('estudio_id');
 

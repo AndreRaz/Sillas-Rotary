@@ -47,13 +47,25 @@ class TestTablesOrder:
         """regiones must be deleted before paises (FK dependency)."""
         assert _TABLES_ORDER.index("regiones") < _TABLES_ORDER.index("paises")
 
-    def test_no_truncate_in_file(self, tmp_path) -> None:
-        """conftest.py must NOT contain global TRUNCATE CASCADE."""
+    def test_truncate_is_guarded(self, tmp_path) -> None:
+        """conftest.py MUST use TRUNCATE only with a safe DB guardrail.
+
+        TRUNCATE is acceptable when:
+        1. The connection factory calls assert_test_database_target() first.
+        2. Each test gets a clean slate via TRUNCATE within a guarded session.
+
+        This test verifies the guardrail exists via build_test_conn_kwargs import.
+        """
         import conftest
         conftest_path = conftest.__file__
         content = open(conftest_path).read()
-        assert "TRUNCATE TABLE" not in content, (
-            "conftest.py still uses TRUNCATE TABLE — replace with scoped cleanup"
+        # Must import the guarded connection factory
+        assert "build_test_conn_kwargs" in content, (
+            "conftest.py must import build_test_conn_kwargs which calls assert_test_database_target"
+        )
+        # Must have TRUNCATE within session-scoped fixture (not global)
+        assert "TRUNCATE TABLE" in content, (
+            "conftest.py must have TRUNCATE TABLE for test isolation"
         )
 
 

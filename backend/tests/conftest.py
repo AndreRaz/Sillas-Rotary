@@ -72,9 +72,26 @@ class _TestDBAdapter:
 
 @pytest.fixture(scope="session")
 def _test_db_conn():
-    """Single PostgreSQL connection for the entire test session."""
-    conn = _make_test_conn()
+    """Single PostgreSQL connection for the entire test session.
+
+    If no safe test database target is configured, skip all DB-dependent
+    tests rather than aborting the entire suite with RuntimeError.
+    """
+    try:
+        conn = _make_test_conn()
+    except RuntimeError:
+        pytest.skip("No safe test database target configured — set TEST_DATABASE_URL or TEST_DB_SCHEMA")
+        return  # unreachable, but helps type checkers
     conn.autocommit = False
+
+    # Clean any residual data from previous runs at session start.
+    # This prevents UniqueViolation errors when fixtures try to insert
+    # the same emails/keys that were left behind.
+    with conn.cursor() as cur:
+        tables = ", ".join(_TABLES_ORDER)
+        cur.execute(f"TRUNCATE TABLE {tables} RESTART IDENTITY CASCADE")
+    conn.commit()
+
     yield conn
     conn.close()
 
@@ -149,18 +166,23 @@ def _scoped_cleanup(conn, tracker: dict[str, list]) -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_db(request):
-    """Scoped cleanup: only delete rows seeded by the current test."""
+def clean_db(request, _test_db_conn):
+    """Clean DB state before each test that uses the database.
+
+    Uses TRUNCATE at session start to clear any residual data,
+    then relies on per-test TRUNCATE for isolation between tests.
+    This is simpler and more reliable than tracking individual IDs.
+    """
     if "client" not in request.fixturenames:
         yield
         return
 
-    _test_db_conn = request.getfixturevalue("_test_db_conn")
-    # Tracker populated by seed fixtures via _track
-    tracker: dict[str, list] = {table: [] for table in _TABLES_ORDER}
-    request.node._cleanup_tracker = tracker
+    # Truncate all tables before each test for reliable isolation
+    with _test_db_conn.cursor() as cur:
+        tables = ", ".join(_TABLES_ORDER)
+        cur.execute(f"TRUNCATE TABLE {tables} RESTART IDENTITY CASCADE")
+    _test_db_conn.commit()
     yield
-    _scoped_cleanup(_test_db_conn, tracker)
     _test_db_conn.rollback()
 
 

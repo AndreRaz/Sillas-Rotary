@@ -300,7 +300,7 @@ def _load_solicitud_for_foto(db: _DBAdapter, solicitud_id: int) -> Optional[dict
 @router.post("/upload-foto")
 async def upload_foto(
     foto: UploadFile = File(...),
-    _usuario: Annotated[CurrentUser, Depends(require_roles("tecnico", "admin"))] = None,
+    _usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "tecnico", "admin"))] = None,
 ) -> dict:
     if foto.content_type not in _ALLOWED_CONTENT_TYPES:
         raise HTTPException(status_code=400, detail="Tipo de archivo no permitido")
@@ -334,7 +334,7 @@ async def upload_foto(
 def crear_solicitud(
     body: SolicitudCreateRequest,
     db: Annotated[_DBAdapter, Depends(get_db)],
-    usuario: Annotated[CurrentUser, Depends(require_roles("tecnico", "admin"))],
+    usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "tecnico", "admin"))],
 ) -> SolicitudCreateResponse:
     resolved_foto_path, resolved_foto_url = _resolve_foto_refs(
         foto_path=body.foto_path,
@@ -395,7 +395,7 @@ def crear_solicitud(
 def obtener_solicitud(
     id: int,
     db: Annotated[_DBAdapter, Depends(get_db)],
-    usuario: Annotated[CurrentUser, Depends(require_roles("tecnico", "admin"))],
+    usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "tecnico", "admin"))],
 ) -> dict:
     row = db.execute(
         "SELECT * FROM solicitudes_tecnicas WHERE id = %s", (id,)
@@ -414,7 +414,7 @@ def actualizar_solicitud(
     id: int,
     body: SolicitudUpdateRequest,
     db: Annotated[_DBAdapter, Depends(get_db)],
-    usuario: Annotated[CurrentUser, Depends(require_roles("tecnico", "admin"))],
+    usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "tecnico", "admin"))],
 ) -> SolicitudUpdateResponse:
     existing = db.execute(
         "SELECT id, usuario_id FROM solicitudes_tecnicas WHERE id = %s", (id,)
@@ -477,9 +477,9 @@ def actualizar_solicitud(
 def obtener_foto_solicitud(
     id: int,
     db: Annotated[_DBAdapter, Depends(get_db)],
-    usuario: Annotated[CurrentUser, Depends(require_roles("tecnico", "admin"))],
+    usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "tecnico", "admin"))],
 ) -> dict:
-    if usuario.rol not in {"tecnico", "admin"}:
+    if usuario.rol not in {"capturista", "tecnico", "admin"}:
         raise HTTPException(status_code=403, detail="No tiene permisos para esta acción")
 
     row = _load_solicitud_for_foto(db, id)

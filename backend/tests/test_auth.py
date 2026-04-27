@@ -64,6 +64,24 @@ class TestLogin:
 
         assert res.status_code == 401
 
+    def test_login_with_invalid_stored_hash_returns_401_not_500(self, client, _test_db_conn, admin_user):
+        """Corrupt password_hash in DB must not crash login with 500."""
+        import psycopg2.extras
+        with _test_db_conn.cursor() as cur:
+            cur.execute(
+                "UPDATE usuarios SET password_hash = %s WHERE id = %s",
+                ("test123", admin_user["id"]),
+            )
+        _test_db_conn.commit()
+
+        res = client.post("/api/auth/login", json={
+            "email": "admin@test.mx",
+            "password": "adminpass123",
+        })
+
+        assert res.status_code == 401
+        assert "Credenciales inválidas" in res.json()["detail"]
+
     def test_login_capturista_returns_capturista_rol(self, client, capturista_user):
         """Capturista login returns correct rol."""
         res = client.post("/api/auth/login", json={
@@ -123,4 +141,43 @@ class TestRoleEnforcement:
             "rol": "admin",
         }, headers=capturista_headers)
 
+        assert res.status_code == 403
+
+
+class TestRouterRoleGuards:
+    def test_tecnico_blocked_from_socioeconomico_create(self, client, tecnico_headers, region_lon):
+        payload = {
+            "region_id": region_lon["id"],
+            "sede": "León sede Forum",
+            "beneficiario": {
+                "nombre": "RBAC Auth",
+                "fecha_nacimiento": "2001-01-15",
+                "diagnostico": "Parálisis cerebral",
+                "calle": "Calle Test 123",
+                "colonia": "Centro",
+                "ciudad": "León",
+                "telefonos": "4621234567",
+            },
+            "tutores": [{"numero_tutor": 1, "nombre": "Tutor", "tiene_imss": True, "tiene_infonavit": False}],
+            "estudio": {
+                "tuvo_silla_previa": False,
+                "elaboro_estudio": "Capturista Test",
+                "fecha_estudio": "2026-04-19",
+                "status": "borrador",
+            },
+        }
+
+        res = client.post("/api/estudios", json=payload, headers=tecnico_headers)
+        assert res.status_code == 403
+
+    def test_capturista_blocked_from_tecnica_create(self, client, capturista_headers, sample_estudio):
+        payload = {
+            "beneficiario_id": sample_estudio["beneficiario_id"],
+            "entorno": "Urbano / Interiores",
+            "control_tronco": "Completo",
+            "control_cabeza": "Independiente",
+            "status": "borrador",
+        }
+
+        res = client.post("/api/solicitudes", json=payload, headers=capturista_headers)
         assert res.status_code == 403

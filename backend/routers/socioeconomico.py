@@ -3,7 +3,7 @@ Estudio socioeconómico router (v2).
 
 Changes from v1:
 - Uses Depends(get_db) instead of context manager
-- Uses require_auth (JWT) — capturista_id replaced by usuario.usuario_id
+- Uses require_auth (JWT) — identity via usuario.usuario_id (v2)
 - region_id + sede at top level of EstudioCreateRequest (moved from EstudioIn)
 - Calls generate_folio() to assign structured folio to each beneficiario
 - Returns folio in EstudioCreateResponse
@@ -15,10 +15,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 
 from database import get_db, _DBAdapter
-from routers.auth import CurrentUser, require_auth
+from routers.auth import CurrentUser, assert_resource_owner, require_roles
 from routers.regiones import generate_folio
 
 router = APIRouter()
+ALLOWED_ESTADO_CIVIL = {"Casado", "Soltero", "Viudo"}
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +56,15 @@ class TutorIn(BaseModel):
     def numero_tutor_valido(cls, v: int) -> int:
         if v not in (1, 2):
             raise ValueError("numero_tutor debe ser 1 o 2")
+        return v
+
+    @field_validator("estado_civil")
+    @classmethod
+    def estado_civil_valido(cls, v: Optional[str]) -> Optional[str]:
+        if v in (None, ""):
+            return None
+        if v not in ALLOWED_ESTADO_CIVIL:
+            raise ValueError("estado_civil solo permite Casado, Soltero, Viudo o vacío")
         return v
 
 
@@ -104,6 +114,7 @@ class EstudioUpdateRequest(BaseModel):
     elaboro_estudio: Optional[str] = None
     fecha_estudio: Optional[str] = None
     status: Optional[str] = None
+    tutores: Optional[list[TutorIn]] = None
 
     @field_validator("status")
     @classmethod
@@ -127,7 +138,7 @@ class EstudioUpdateResponse(BaseModel):
 def crear_estudio(
     body: EstudioCreateRequest,
     db: Annotated[_DBAdapter, Depends(get_db)],
-    usuario: Annotated[CurrentUser, Depends(require_auth)],
+    usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "admin"))],
 ) -> EstudioCreateResponse:
     """Create a complete estudio socioeconómico with beneficiario, tutores, and study data."""
     _validar_tutores(body.tutores)
@@ -160,33 +171,9 @@ def crear_estudio(
     ).fetchone()["id"]
 
     # 3. INSERT tutores
-    for tutor in body.tutores:
-        db.execute(
-            """
-            INSERT INTO tutores
-                (beneficiario_id, numero_tutor, nombre, edad, nivel_estudios,
-                 estado_civil, num_hijos, vivienda, fuente_empleo, antiguedad,
-                 ingreso_mensual, tiene_imss, tiene_infonavit)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                beneficiario_id,
-                tutor.numero_tutor,
-                tutor.nombre,
-                tutor.edad,
-                tutor.nivel_estudios or None,
-                tutor.estado_civil or None,
-                tutor.num_hijos if tutor.num_hijos is not None else 0,
-                tutor.vivienda or None,
-                tutor.fuente_empleo or None,
-                tutor.antiguedad or None,
-                tutor.ingreso_mensual,
-                int(tutor.tiene_imss),
-                int(tutor.tiene_infonavit),
-            ),
-        )
+    _insertar_tutores(db, beneficiario_id, body.tutores)
 
-    # 4. INSERT estudio (now uses usuario_id instead of capturista_id)
+    # 4. INSERT estudio (usuario_id from JWT claims)
     estudio = body.estudio
     estudio_id = db.execute(
         """
@@ -223,7 +210,7 @@ def crear_estudio(
 def obtener_estudio(
     id: int,
     db: Annotated[_DBAdapter, Depends(get_db)],
-    usuario: Annotated[CurrentUser, Depends(require_auth)],
+    usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "admin"))],
 ) -> dict:
     """Retrieve a full estudio by ID. Only the owner or an admin may read it."""
     estudio_row = db.execute(
@@ -233,8 +220,7 @@ def obtener_estudio(
     if estudio_row is None:
         raise HTTPException(status_code=404, detail="Estudio no encontrado")
 
-    if usuario.rol != "admin" and estudio_row["usuario_id"] != usuario.usuario_id:
-        raise HTTPException(status_code=403, detail="No tiene acceso a este estudio")
+    assert_resource_owner(estudio_row["usuario_id"], usuario)
 
     beneficiario_row = db.execute(
         "SELECT * FROM beneficiarios WHERE id = %s",
@@ -258,20 +244,24 @@ def actualizar_estudio(
     id: int,
     body: EstudioUpdateRequest,
     db: Annotated[_DBAdapter, Depends(get_db)],
-    usuario: Annotated[CurrentUser, Depends(require_auth)],
+    usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "admin"))],
 ) -> EstudioUpdateResponse:
     """Partial update of an estudio. Only the owner or an admin may update it."""
     existing = db.execute(
-        "SELECT id, usuario_id FROM estudios_socioeconomicos WHERE id = %s", (id,)
+        "SELECT id, usuario_id, beneficiario_id FROM estudios_socioeconomicos WHERE id = %s", (id,)
     ).fetchone()
 
     if existing is None:
         raise HTTPException(status_code=404, detail="Estudio no encontrado")
 
-    if usuario.rol != "admin" and existing["usuario_id"] != usuario.usuario_id:
-        raise HTTPException(status_code=403, detail="No tiene acceso a este estudio")
+    assert_resource_owner(existing["usuario_id"], usuario)
 
-    fields = body.model_dump(exclude_none=True)
+    if body.tutores is not None:
+        _validar_tutores(body.tutores)
+        db.execute("DELETE FROM tutores WHERE beneficiario_id = %s", (existing["beneficiario_id"],))
+        _insertar_tutores(db, existing["beneficiario_id"], body.tutores)
+
+    fields = body.model_dump(exclude_none=True, exclude={"tutores"})
     if not fields:
         row = db.execute(
             "SELECT id, status, updated_at FROM estudios_socioeconomicos WHERE id = %s",
@@ -317,3 +307,31 @@ def _validar_tutores(tutores: list[TutorIn]) -> None:
     for num in numeros:
         if num not in (1, 2):
             raise HTTPException(status_code=400, detail=f"numero_tutor inválido: {num}")
+
+
+def _insertar_tutores(db: _DBAdapter, beneficiario_id: int, tutores: list[TutorIn]) -> None:
+    for tutor in tutores:
+        db.execute(
+            """
+            INSERT INTO tutores
+                (beneficiario_id, numero_tutor, nombre, edad, nivel_estudios,
+                 estado_civil, num_hijos, vivienda, fuente_empleo, antiguedad,
+                 ingreso_mensual, tiene_imss, tiene_infonavit)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                beneficiario_id,
+                tutor.numero_tutor,
+                tutor.nombre,
+                tutor.edad,
+                tutor.nivel_estudios or None,
+                tutor.estado_civil,
+                tutor.num_hijos if tutor.num_hijos is not None else 0,
+                tutor.vivienda or None,
+                tutor.fuente_empleo or None,
+                tutor.antiguedad or None,
+                tutor.ingreso_mensual,
+                int(tutor.tiene_imss),
+                int(tutor.tiene_infonavit),
+            ),
+        )

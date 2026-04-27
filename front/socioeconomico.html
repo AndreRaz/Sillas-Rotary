@@ -128,7 +128,11 @@
 <div><label class="text-xs font-bold text-slate-500 uppercase">Estudios</label><input class="w-full mt-1 border-slate-300" name="tutor1_nivel_estudios" type="text"/></div>
 </div>
 <div class="grid grid-cols-2 gap-4">
-<div><label class="text-xs font-bold text-slate-500 uppercase">Edo. Civil</label><input class="w-full mt-1 border-slate-300" name="tutor1_estado_civil" type="text"/></div>
+<div><label class="text-xs font-bold text-slate-500 uppercase">Edo. Civil</label>
+<select class="w-full mt-1 border-slate-300" name="tutor1_estado_civil">
+<option value="">Selecciona una opción</option><option>Casado</option><option>Soltero</option><option>Viudo</option>
+</select>
+</div>
 <div><label class="text-xs font-bold text-slate-500 uppercase">No. Hijos</label><input class="w-full mt-1 border-slate-300" name="tutor1_num_hijos" type="number"/></div>
 </div>
 <div><label class="text-xs font-bold text-slate-500 uppercase">Vivienda</label>
@@ -155,7 +159,11 @@
 <div><label class="text-xs font-bold text-slate-500 uppercase">Estudios</label><input class="w-full mt-1 border-slate-300" name="tutor2_nivel_estudios" type="text"/></div>
 </div>
 <div class="grid grid-cols-2 gap-4">
-<div><label class="text-xs font-bold text-slate-500 uppercase">Edo. Civil</label><input class="w-full mt-1 border-slate-300" name="tutor2_estado_civil" type="text"/></div>
+<div><label class="text-xs font-bold text-slate-500 uppercase">Edo. Civil</label>
+<select class="w-full mt-1 border-slate-300" name="tutor2_estado_civil">
+<option value="">Selecciona una opción</option><option>Casado</option><option>Soltero</option><option>Viudo</option>
+</select>
+</div>
 <div><label class="text-xs font-bold text-slate-500 uppercase">No. Hijos</label><input class="w-full mt-1 border-slate-300" name="tutor2_num_hijos" type="number"/></div>
 </div>
 <div><label class="text-xs font-bold text-slate-500 uppercase">Vivienda</label>
@@ -277,6 +285,13 @@
 
                     // Pre-fill tutores
                     if (data.tutores && data.tutores.length > 0) {
+                        const ESTADO_CIVIL_CATALOG = ['Casado', 'Soltero', 'Viudo'];
+                        const setEstadoCivilCatalogValue = (name, val) => {
+                            const el = document.querySelector(`[name="${name}"]`);
+                            if (!el) return;
+                            el.value = ESTADO_CIVIL_CATALOG.includes(val) ? val : '';
+                        };
+
                         data.tutores.forEach(t => {
                             const num = t.numero_tutor;
                             const setVal = (name, val) => {
@@ -290,7 +305,7 @@
                             setVal(`tutor${num}_nombre`, t.nombre);
                             setVal(`tutor${num}_edad`, t.edad);
                             setVal(`tutor${num}_nivel_estudios`, t.nivel_estudios);
-                            setVal(`tutor${num}_estado_civil`, t.estado_civil);
+                            setEstadoCivilCatalogValue(`tutor${num}_estado_civil`, t.estado_civil);
                             setVal(`tutor${num}_num_hijos`, t.num_hijos);
                             setVal(`tutor${num}_vivienda`, t.vivienda);
                             setVal(`tutor${num}_fuente_empleo`, t.fuente_empleo);
@@ -425,22 +440,11 @@
             let res, data;
 
             if (estudioId) {
-                // PATCH existing draft - send flat update with only estudio fields
-                const f = document.querySelector('form');
-                const fd = new FormData(f);
-                const get = (name) => fd.get(name) || '';
-
-                const toFloatOrNull = (v) => { const n = parseFloat(v); return isNaN(n) ? null : n; };
-
+                // PATCH existing draft - update estudio fields + tutores (for resumed edits)
+                const payload = getFormData(status);
                 const patchPayload = {
-                    otras_fuentes_ingreso: get('otras_fuentes_ingreso'),
-                    monto_otras_fuentes: toFloatOrNull(get('monto_otras_fuentes')),
-                    tuvo_silla_previa: get('silla_previa') === 'Sí' ? 1 : 0,
-                    como_obtuvo_silla: get('como_obtuvo_silla'),
-                    elaboro_estudio: get('elaboro_estudio'),
-                    fecha_estudio: get('fecha_estudio'),
-                    sede: get('sede'),
-                    status
+                    ...payload.estudio,
+                    tutores: payload.tutores,
                 };
 
                 res = await fetch(`/api/estudios/${estudioId}`, {

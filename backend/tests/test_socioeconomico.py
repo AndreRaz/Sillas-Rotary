@@ -1,3 +1,6 @@
+import pytest
+
+
 def _estudio_payload(region_id: int) -> dict:
     return {
         "region_id": region_id,
@@ -15,6 +18,7 @@ def _estudio_payload(region_id: int) -> dict:
             {
                 "numero_tutor": 1,
                 "nombre": "Tutor RBAC",
+                "estado_civil": "Casado",
                 "tiene_imss": True,
                 "tiene_infonavit": False,
             }
@@ -53,6 +57,109 @@ def _create_user_and_login(client, admin_headers: dict, *, suffix: str, rol: str
 
 
 class TestSocioeconomicoRbac:
+    @pytest.mark.parametrize("estado_civil", ["Casado", "Soltero", "Viudo", "", None])
+    def test_post_estudios_accepts_estado_civil_catalog_values(
+        self,
+        client,
+        capturista_headers,
+        region_lon,
+        estado_civil,
+    ):
+        payload = _estudio_payload(region_lon["id"])
+        payload["tutores"][0]["estado_civil"] = estado_civil
+
+        response = client.post(
+            "/api/estudios",
+            headers=capturista_headers,
+            json=payload,
+        )
+
+        assert response.status_code == 201
+
+    def test_post_estudios_rejects_invalid_estado_civil_value(self, client, capturista_headers, region_lon):
+        payload = _estudio_payload(region_lon["id"])
+        payload["tutores"][0]["estado_civil"] = "Union libre"
+
+        response = client.post(
+            "/api/estudios",
+            headers=capturista_headers,
+            json=payload,
+        )
+
+        assert response.status_code == 422
+        assert "Casado" in response.text
+        assert "Soltero" in response.text
+        assert "Viudo" in response.text
+
+    def test_patch_estudios_rejects_invalid_estado_civil_value(self, client, capturista_headers, region_lon):
+        create_payload = _estudio_payload(region_lon["id"])
+        create_response = client.post(
+            "/api/estudios",
+            headers=capturista_headers,
+            json=create_payload,
+        )
+        assert create_response.status_code == 201
+        estudio_id = create_response.json()["estudio_id"]
+
+        patch_payload = {
+            "tutores": [
+                {
+                    "numero_tutor": 1,
+                    "nombre": "Tutor RBAC",
+                    "estado_civil": "Union libre",
+                    "tiene_imss": True,
+                    "tiene_infonavit": False,
+                }
+            ]
+        }
+
+        response = client.patch(
+            f"/api/estudios/{estudio_id}",
+            headers=capturista_headers,
+            json=patch_payload,
+        )
+
+        assert response.status_code == 422
+        assert "Casado" in response.text
+        assert "Soltero" in response.text
+        assert "Viudo" in response.text
+
+    def test_patch_estudios_persists_tutor_estado_civil_update(self, client, capturista_headers, region_lon):
+        create_payload = _estudio_payload(region_lon["id"])
+        create_response = client.post(
+            "/api/estudios",
+            headers=capturista_headers,
+            json=create_payload,
+        )
+        assert create_response.status_code == 201
+        estudio_id = create_response.json()["estudio_id"]
+
+        patch_payload = {
+            "tutores": [
+                {
+                    "numero_tutor": 1,
+                    "nombre": "Tutor RBAC",
+                    "estado_civil": "Soltero",
+                    "tiene_imss": True,
+                    "tiene_infonavit": False,
+                }
+            ]
+        }
+
+        patch_response = client.patch(
+            f"/api/estudios/{estudio_id}",
+            headers=capturista_headers,
+            json=patch_payload,
+        )
+        assert patch_response.status_code == 200
+
+        get_response = client.get(
+            f"/api/estudios/{estudio_id}",
+            headers=capturista_headers,
+        )
+        assert get_response.status_code == 200
+        assert get_response.json()["tutores"][0]["estado_civil"] == "Soltero"
+
     def test_tecnico_cannot_create_estudio(self, client, tecnico_headers, region_lon):
         response = client.post(
             "/api/estudios",

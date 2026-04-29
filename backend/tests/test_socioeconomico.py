@@ -57,6 +57,55 @@ def _create_user_and_login(client, admin_headers: dict, *, suffix: str, rol: str
 
 
 class TestSocioeconomicoRbac:
+    @pytest.mark.parametrize("telefono", ["4621234567", " 4621234567 "])
+    def test_post_estudios_accepts_exactly_10_numeric_phone(
+        self,
+        client,
+        capturista_headers,
+        region_lon,
+        telefono,
+    ):
+        payload = _estudio_payload(region_lon["id"])
+        payload["beneficiario"]["telefonos"] = telefono
+
+        response = client.post(
+            "/api/estudios",
+            headers=capturista_headers,
+            json=payload,
+        )
+
+        assert response.status_code == 201
+
+    @pytest.mark.parametrize(
+        "telefono",
+        [
+            "123456789",
+            "12345678901",
+            "12345abcde",
+            "12345 6789",
+            "12345-6789",
+            "",
+        ],
+    )
+    def test_post_estudios_rejects_invalid_phone_format(
+        self,
+        client,
+        capturista_headers,
+        region_lon,
+        telefono,
+    ):
+        payload = _estudio_payload(region_lon["id"])
+        payload["beneficiario"]["telefonos"] = telefono
+
+        response = client.post(
+            "/api/estudios",
+            headers=capturista_headers,
+            json=payload,
+        )
+
+        assert response.status_code == 422
+        assert "El teléfono debe contener exactamente 10 dígitos numéricos" in response.text
+
     @pytest.mark.parametrize("estado_civil", ["Casado", "Soltero", "Viudo", "", None])
     def test_post_estudios_accepts_estado_civil_catalog_values(
         self,

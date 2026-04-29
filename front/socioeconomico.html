@@ -190,8 +190,14 @@
               <input
                 class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
                 name="telefonos"
-                type="text"
+                type="tel"
+                inputmode="numeric"
+                maxlength="10"
+                minlength="10"
+                pattern="[0-9]{10}"
+                autocomplete="off"
               />
+              <p class="text-xs text-slate-500">10 dígitos, sin espacios ni símbolos</p>
             </div>
           </div>
         </section>
@@ -641,6 +647,66 @@
         return Number.isFinite(numberValue) ? numberValue : null;
       }
 
+      function sanitizeTelefono(raw) {
+        return String(raw || "")
+          .replace(/\D/g, "")
+          .slice(0, 10);
+      }
+
+      function telefonoEsValido(raw) {
+        return /^[0-9]{10}$/.test(String(raw || "").trim());
+      }
+
+      function formatBackendErrorMessage(errData, fallbackMessage) {
+        const telefonoMsg =
+          "El teléfono debe contener exactamente 10 dígitos numéricos";
+
+        if (!errData) return fallbackMessage;
+
+        if (typeof errData.detail === "string" && errData.detail.trim()) {
+          return errData.detail;
+        }
+
+        if (Array.isArray(errData.detail)) {
+          const details = errData.detail;
+
+          const telefonoDetail = details.find(
+            (d) =>
+              Array.isArray(d?.loc) &&
+              d.loc.join(".").includes("beneficiario.telefonos"),
+          );
+
+          if (telefonoDetail) {
+            return telefonoDetail.msg || telefonoMsg;
+          }
+
+          const readableMessages = details
+            .map((d) => {
+              const path = Array.isArray(d?.loc) ? d.loc.slice(1).join(".") : "campo";
+              const msg = d?.msg || "valor inválido";
+              return `${path}: ${msg}`;
+            })
+            .filter(Boolean);
+
+          if (readableMessages.length > 0) {
+            return readableMessages.join(" | ");
+          }
+        }
+
+        return fallbackMessage;
+      }
+
+      function setupTelefonoSanitization() {
+        const telefonoInput = document.querySelector('[name="telefonos"]');
+        if (!telefonoInput) return;
+
+        telefonoInput.addEventListener("input", () => {
+          telefonoInput.value = sanitizeTelefono(telefonoInput.value);
+        });
+
+        telefonoInput.value = sanitizeTelefono(telefonoInput.value);
+      }
+
       function setupMonetaryFieldFormatting() {
         MONETARY_FIELD_IDS.forEach((fieldName) => {
           const input = document.querySelector(`[name="${fieldName}"]`);
@@ -865,6 +931,17 @@
         errorEl.classList.add("hidden");
         errorEl.textContent = "";
 
+        const telefonoInput = document.querySelector('[name="telefonos"]');
+        if (telefonoInput) {
+          telefonoInput.value = sanitizeTelefono(telefonoInput.value);
+          if (!telefonoEsValido(telefonoInput.value)) {
+            errorEl.textContent =
+              "El teléfono debe contener exactamente 10 dígitos numéricos";
+            errorEl.classList.remove("hidden");
+            return;
+          }
+        }
+
         const session = JSON.parse(localStorage.getItem("session") || "null");
         if (!session?.token) {
           window.location.href = "login.html";
@@ -895,9 +972,10 @@
 
             if (!res.ok) {
               const errData = await res.json().catch(() => ({}));
-              errorEl.textContent =
-                errData.detail ||
-                "Error al actualizar el estudio. Intente de nuevo.";
+              errorEl.textContent = formatBackendErrorMessage(
+                errData,
+                "Error al actualizar el estudio. Intente de nuevo.",
+              );
               errorEl.classList.remove("hidden");
               return;
             }
@@ -927,9 +1005,10 @@
 
             if (!res.ok) {
               const errData = await res.json().catch(() => ({}));
-              errorEl.textContent =
-                errData.detail ||
-                "Error al guardar el estudio. Intente de nuevo.";
+              errorEl.textContent = formatBackendErrorMessage(
+                errData,
+                "Error al guardar el estudio. Intente de nuevo.",
+              );
               errorEl.classList.remove("hidden");
               return;
             }
@@ -962,6 +1041,7 @@
 
       // Guardar Borrador button
       setupMonetaryFieldFormatting();
+      setupTelefonoSanitization();
 
       document
         .querySelector('button[type="button"]')

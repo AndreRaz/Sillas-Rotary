@@ -10,6 +10,7 @@ Changes from v1:
 """
 
 from typing import Annotated, Optional
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
@@ -35,6 +36,14 @@ class BeneficiarioIn(BaseModel):
     ciudad: str
     telefonos: str
     email: Optional[str] = None
+
+    @field_validator("telefonos")
+    @classmethod
+    def telefonos_valido(cls, v: str) -> str:
+        telefono = v.strip()
+        if not re.fullmatch(r"^[0-9]{10}$", telefono):
+            raise ValueError("El teléfono debe contener exactamente 10 dígitos numéricos")
+        return telefono
 
 
 class TutorIn(BaseModel):

@@ -112,3 +112,35 @@ class TestEstudioErrorContract:
         assert response.status_code in (422, 403), (
             f"Expected 422 (validation) or 403 (role), got {response.status_code}"
         )
+
+    def test_invalid_telefonos_returns_422_with_detail_not_400(
+        self, client, capturista_headers, region_lon
+    ):
+        payload = {
+            "region_id": region_lon["id"],
+            "sede": "León sede Forum",
+            "beneficiario": {
+                "nombre": "Bene Test",
+                "fecha_nacimiento": "2000-01-15",
+                "diagnostico": "Diagnóstico",
+                "calle": "Calle Test",
+                "colonia": "Centro",
+                "ciudad": "León",
+                "telefonos": "12345-6789",
+            },
+            "tutores": [],
+            "estudio": {
+                "tuvo_silla_previa": False,
+                "elaboro_estudio": "Capturista Test",
+                "fecha_estudio": "2026-04-19",
+                "status": "borrador",
+            },
+        }
+        response = client.post(
+            "/api/estudios",
+            json=payload,
+            headers=capturista_headers,
+        )
+        assert response.status_code != 400
+        assert response.status_code == 422
+        assert "detail" in response.json()

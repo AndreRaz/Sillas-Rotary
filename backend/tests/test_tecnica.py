@@ -33,6 +33,18 @@ def _create_user_and_login(client, admin_headers: dict, *, suffix: str, rol: str
 
 
 class TestTecnicaRbac:
+    def test_unidad_cm_convierte_a_pulgadas(self, client, tecnico_headers, sample_estudio):
+        payload = _solicitud_payload(sample_estudio["beneficiario_id"])
+        payload.update({"unidad_medida": "cm", "altura_total_in": 25.4})
+        create_response = client.post("/api/solicitudes", headers=tecnico_headers, json=payload)
+        assert create_response.status_code == 201
+        solicitud_id = create_response.json()["solicitud_id"]
+        get_response = client.get(f"/api/solicitudes/{solicitud_id}", headers=tecnico_headers)
+        assert get_response.status_code == 200
+        body = get_response.json()
+        assert body["unidad_captura"] == "cm"
+        assert body["altura_total_in"] == 10.0
+
     def test_capturista_cannot_create_solicitud(self, client, capturista_headers, sample_estudio):
         response = client.post(
             "/api/solicitudes",
@@ -57,6 +69,38 @@ class TestTecnicaRbac:
         )
         assert patch_response.status_code == 200
         assert patch_response.json()["status"] == "completo"
+
+    def test_patch_rechaza_unidad_medida_invalida(self, client, tecnico_headers, sample_estudio):
+        create_response = client.post(
+            "/api/solicitudes",
+            headers=tecnico_headers,
+            json=_solicitud_payload(sample_estudio["beneficiario_id"]),
+        )
+        assert create_response.status_code == 201
+        solicitud_id = create_response.json()["solicitud_id"]
+
+        patch_response = client.patch(
+            f"/api/solicitudes/{solicitud_id}",
+            headers=tecnico_headers,
+            json={"unidad_medida": "mm"},
+        )
+        assert patch_response.status_code == 422
+
+    def test_patch_rechaza_medida_fuera_de_rango(self, client, tecnico_headers, sample_estudio):
+        create_response = client.post(
+            "/api/solicitudes",
+            headers=tecnico_headers,
+            json=_solicitud_payload(sample_estudio["beneficiario_id"]),
+        )
+        assert create_response.status_code == 201
+        solicitud_id = create_response.json()["solicitud_id"]
+
+        patch_response = client.patch(
+            f"/api/solicitudes/{solicitud_id}",
+            headers=tecnico_headers,
+            json={"peso_kg": -1},
+        )
+        assert patch_response.status_code == 422
 
     def test_non_owner_tecnico_patch_forbidden(
         self,

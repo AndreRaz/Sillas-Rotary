@@ -15,11 +15,19 @@ DDL = [
     CREATE TABLE IF NOT EXISTS beneficiarios (
         id                SERIAL PRIMARY KEY,
         nombre            TEXT NOT NULL,
+        nombres           TEXT NOT NULL DEFAULT '',
+        apellido_paterno  TEXT NOT NULL DEFAULT '',
+        apellido_materno  TEXT NOT NULL DEFAULT '',
         fecha_nacimiento  TEXT NOT NULL,
         diagnostico       TEXT NOT NULL,
         calle             TEXT NOT NULL,
+        num_ext           TEXT,
+        num_int           TEXT,
         colonia           TEXT NOT NULL,
         ciudad            TEXT NOT NULL,
+        estado_codigo     TEXT,
+        estado_nombre     TEXT,
+        sexo              TEXT,
         telefonos         TEXT NOT NULL,
         created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -38,8 +46,14 @@ DDL = [
         fuente_empleo    TEXT,
         antiguedad       TEXT,
         ingreso_mensual  REAL    CHECK(ingreso_mensual IS NULL OR ingreso_mensual >= 0),
-        tiene_imss       INTEGER NOT NULL DEFAULT 0 CHECK(tiene_imss IN (0, 1)),
-        tiene_infonavit  INTEGER NOT NULL DEFAULT 0 CHECK(tiene_infonavit IN (0, 1)),
+        antiguedad_meses INTEGER,
+        antiguedad_aplica INTEGER NOT NULL DEFAULT 1 CHECK(antiguedad_aplica IN (0,1)),
+        sin_empleo       INTEGER NOT NULL DEFAULT 0 CHECK(sin_empleo IN (0,1)),
+        otras_fuentes_aplica INTEGER NOT NULL DEFAULT 0 CHECK(otras_fuentes_aplica IN (0,1)),
+        otras_fuentes_ingreso TEXT,
+        monto_otras_fuentes REAL,
+        tiene_imss       INTEGER CHECK(tiene_imss IS NULL OR tiene_imss IN (0, 1)),
+        tiene_infonavit  INTEGER CHECK(tiene_infonavit IS NULL OR tiene_infonavit IN (0, 1)),
         UNIQUE(beneficiario_id, numero_tutor)
     )
     """,
@@ -57,10 +71,7 @@ DDL = [
         elaboro_estudio         TEXT    NOT NULL,
         fecha_estudio           TEXT    NOT NULL,
         sede                    TEXT    NOT NULL,
-        credencial_path         TEXT,
-        credencial_url          TEXT,
-        comprobante_domicilio_path TEXT,
-        comprobante_domicilio_url  TEXT,
+        ciudad_registro         TEXT,
         status                  TEXT    NOT NULL DEFAULT 'borrador' CHECK(status IN ('borrador', 'completo')),
         created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -77,13 +88,14 @@ DDL = [
         control_tronco              TEXT    NOT NULL,
         control_cabeza              TEXT    NOT NULL,
         observaciones_posturales    TEXT,
-        altura_total_in             REAL    CHECK(altura_total_in IS NULL OR altura_total_in > 0),
-        peso_kg                     REAL    CHECK(peso_kg IS NULL OR peso_kg > 0),
-        medida_cabeza_asiento       REAL    CHECK(medida_cabeza_asiento IS NULL OR medida_cabeza_asiento > 0),
-        medida_hombro_asiento       REAL    CHECK(medida_hombro_asiento IS NULL OR medida_hombro_asiento > 0),
-        medida_prof_asiento         REAL    CHECK(medida_prof_asiento IS NULL OR medida_prof_asiento > 0),
-        medida_rodilla_talon        REAL    CHECK(medida_rodilla_talon IS NULL OR medida_rodilla_talon > 0),
-        medida_ancho_cadera         REAL    CHECK(medida_ancho_cadera IS NULL OR medida_ancho_cadera > 0),
+        altura_total_in             REAL    CHECK(altura_total_in IS NULL OR (altura_total_in >= 0 AND altura_total_in <= 999.999)),
+        peso_kg                     REAL    CHECK(peso_kg IS NULL OR (peso_kg >= 0 AND peso_kg <= 999.999)),
+        medida_cabeza_asiento       REAL    CHECK(medida_cabeza_asiento IS NULL OR (medida_cabeza_asiento >= 0 AND medida_cabeza_asiento <= 999.999)),
+        medida_hombro_asiento       REAL    CHECK(medida_hombro_asiento IS NULL OR (medida_hombro_asiento >= 0 AND medida_hombro_asiento <= 999.999)),
+        medida_prof_asiento         REAL    CHECK(medida_prof_asiento IS NULL OR (medida_prof_asiento >= 0 AND medida_prof_asiento <= 999.999)),
+        medida_rodilla_talon        REAL    CHECK(medida_rodilla_talon IS NULL OR (medida_rodilla_talon >= 0 AND medida_rodilla_talon <= 999.999)),
+        medida_ancho_cadera         REAL    CHECK(medida_ancho_cadera IS NULL OR (medida_ancho_cadera >= 0 AND medida_ancho_cadera <= 999.999)),
+        unidad_captura              TEXT    DEFAULT 'in',
         foto_url                    TEXT,
         foto_path                   TEXT,
         entidad_solicitante         TEXT,
@@ -160,22 +172,10 @@ def _init_storage() -> None:
         os.environ["SUPABASE_URL"],
         os.environ["SUPABASE_SERVICE_KEY"],
     )
-    _ensure_private_bucket(
-        client,
-        bucket_name="fotos-tecnica",
-        allowed_mime_types=["image/jpeg", "image/png"],
-    )
-    _ensure_private_bucket(
-        client,
-        bucket_name="documentos-estudio",
-        allowed_mime_types=["image/jpeg", "image/png", "application/pdf"],
-    )
-
-
-def _ensure_private_bucket(client, *, bucket_name: str, allowed_mime_types: list[str]) -> None:
+    bucket_name = "fotos-tecnica"
     secure_options = {
         "public": False,
-        "allowed_mime_types": allowed_mime_types,
+        "allowed_mime_types": ["image/jpeg", "image/png"],
         "file_size_limit": 10 * 1024 * 1024,
     }
 
@@ -183,13 +183,14 @@ def _ensure_private_bucket(client, *, bucket_name: str, allowed_mime_types: list
         bucket = client.storage.get_bucket(bucket_name)
         if not isinstance(bucket, dict) or bucket.get("public") is not False:
             client.storage.update_bucket(bucket_name, options=secure_options)
-            print(f"Storage bucket '{bucket_name}' hardened to private mode.")
+            print("Storage bucket 'fotos-tecnica' hardened to private mode.")
         else:
+            # Aseguramos límites aunque ya exista privado.
             client.storage.update_bucket(bucket_name, options=secure_options)
-            print(f"Storage bucket '{bucket_name}' already private — security options refreshed.")
+            print("Storage bucket 'fotos-tecnica' already private — security options refreshed.")
     except Exception:
         client.storage.create_bucket(bucket_name, options=secure_options)
-        print(f"Storage bucket '{bucket_name}' created in private mode.")
+        print("Storage bucket 'fotos-tecnica' created in private mode.")
 
 
 if __name__ == "__main__":

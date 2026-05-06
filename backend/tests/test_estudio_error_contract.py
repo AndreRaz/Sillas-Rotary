@@ -50,7 +50,9 @@ class TestEstudioErrorContract:
             "region_id": region_lon["id"],
             "sede": "León sede Forum",
             "beneficiario": {
-                "nombre": "Bene Test",
+                "nombres": "BENE",
+                "apellido_paterno": "TEST",
+                "apellido_materno": "PRUEBA",
                 "fecha_nacimiento": "2000-01-15",
                 "diagnostico": "Diagnóstico",
                 "calle": "Calle Test",
@@ -81,7 +83,9 @@ class TestEstudioErrorContract:
             "region_id": region_lon["id"],
             "sede": "León sede Forum",
             "beneficiario": {
-                "nombre": "Bene Test",
+                "nombres": "BENE",
+                "apellido_paterno": "TEST",
+                "apellido_materno": "PRUEBA",
                 # Missing fecha_nacimiento, diagnostico, etc.
             },
             "tutores": [],
@@ -120,7 +124,9 @@ class TestEstudioErrorContract:
             "region_id": region_lon["id"],
             "sede": "León sede Forum",
             "beneficiario": {
-                "nombre": "Bene Test",
+                "nombres": "BENE",
+                "apellido_paterno": "TEST",
+                "apellido_materno": "PRUEBA",
                 "fecha_nacimiento": "2000-01-15",
                 "diagnostico": "Diagnóstico",
                 "calle": "Calle Test",

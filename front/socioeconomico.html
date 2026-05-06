@@ -123,24 +123,54 @@
             Datos del Beneficiario
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="md:col-span-2 space-y-2">
-              <label class="block text-sm font-semibold text-slate-700"
-                >Nombre Completo</label
-              >
+            <!-- Nombre(s) -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-slate-700">Nombre(s)</label>
               <input
                 class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
-                name="nombre"
+                name="nombres"
                 type="text"
+                minlength="2"
+                maxlength="60"
+                pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$"
+                required
+              />
+            </div>
+            <!-- Apellido Paterno -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-slate-700">Apellido Paterno</label>
+              <input
+                class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
+                name="apellido_paterno"
+                type="text"
+                minlength="2"
+                maxlength="40"
+                pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$"
+                required
+              />
+            </div>
+            <!-- Apellido Materno -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-slate-700">Apellido Materno</label>
+              <input
+                class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
+                name="apellido_materno"
+                type="text"
+                minlength="2"
+                maxlength="40"
+                pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$"
+                required
               />
             </div>
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700"
-                >Fecha de Nacimiento</label
+                >Fecha de nacimiento del beneficiario</label
               >
               <input
                 class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
                 name="fecha_nacimiento"
                 type="date"
+                required
               />
             </div>
             <div class="space-y-2">
@@ -151,17 +181,31 @@
                 class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
                 name="diagnostico"
                 type="text"
+                minlength="3"
+                maxlength="160"
+                required
               />
             </div>
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700"
-                >Domicilio (Calle y número)</label
+                >Calle</label
               >
               <input
                 class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
                 name="calle"
                 type="text"
+                minlength="3"
+                maxlength="120"
+                required
               />
+            </div>
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-slate-700">Número exterior</label>
+              <input class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary" name="num_ext" type="text" pattern="[A-Za-z0-9\-\/ ]{1,10}" maxlength="10" required />
+            </div>
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-slate-700">Número interior</label>
+              <input class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary" name="num_int" type="text" pattern="[A-Za-z0-9\-\/ ]{0,10}" maxlength="10" />
             </div>
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700"
@@ -171,17 +215,26 @@
                 class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
                 name="colonia"
                 type="text"
+                minlength="2"
+                maxlength="120"
+                required
               />
             </div>
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-slate-700"
-                >Ciudad</label
-              >
-              <input
-                class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
-                name="ciudad"
-                type="text"
-              />
+              <label class="block text-sm font-semibold text-slate-700">Ciudad</label>
+              <input class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary" name="ciudad" type="text" minlength="2" maxlength="80" required />
+            </div>
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-slate-700">Estado (INEGI)</label>
+              <select class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary" name="estado_codigo" id="estado_codigo" required></select>
+            </div>
+            <div class="space-y-2 md:col-span-2">
+              <label class="block text-sm font-semibold text-slate-700">Sexo</label>
+              <div class="flex gap-6">
+                <label><input type="radio" name="sexo" value="M" required /> M</label>
+                <label><input type="radio" name="sexo" value="F" required /> F</label>
+                <label><input type="radio" name="sexo" value="NE" required /> NE</label>
+              </div>
             </div>
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700"
@@ -239,6 +292,9 @@
                     class="w-full mt-1 border-slate-300"
                     name="tutor1_nombre"
                     type="text"
+                    minlength="3"
+                    maxlength="120"
+                    required
                   />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -249,31 +305,45 @@
                       class="w-full mt-1 border-slate-300"
                       name="tutor1_edad"
                       type="number"
+                      min="18"
+                      max="100"
                     />
                   </div>
                   <div>
                     <label class="text-xs font-bold text-slate-500 uppercase"
                       >Estudios</label
-                    ><input
+                    >
+                    <select
                       class="w-full mt-1 border-slate-300"
                       name="tutor1_nivel_estudios"
-                      type="text"
-                    />
+                    >
+                      <option value="">Selecciona una opción</option>
+                      <option value="NINGUNO">Sin estudios</option>
+                      <option value="PRIMARIA">Primaria</option>
+                      <option value="SECUNDARIA">Secundaria</option>
+                      <option value="BACHILLERATO">Bachillerato / Preparatoria</option>
+                      <option value="TECNICO">Carrera Técnica / TSU</option>
+                      <option value="LICENCIATURA">Licenciatura / Ingeniería</option>
+                      <option value="MAESTRIA">Maestría</option>
+                      <option value="DOCTORADO">Doctorado</option>
+                    </select>
                   </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase"
-                      >Edo. Civil</label
-                    >
-                    <select
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase"
+                    >Edo. Civil</label
+                  >
+                  <select
                       class="w-full mt-1 border-slate-300"
                       name="tutor1_estado_civil"
                     >
                       <option value="">Selecciona una opción</option>
-                      <option>Casado</option>
-                      <option>Soltero</option>
-                      <option>Viudo</option>
+                      <option value="SOLTERO">Soltero / Soltera</option>
+                      <option value="CASADO">Casado / Casada</option>
+                      <option value="VIUDO">Viudo / Viuda</option>
+                      <option value="DIVORCIADO">Divorciado / Divorciada</option>
+                      <option value="UNION_LIBRE">Unión libre</option>
                     </select>
                   </div>
                   <div>
@@ -283,6 +353,8 @@
                       class="w-full mt-1 border-slate-300"
                       name="tutor1_num_hijos"
                       type="number"
+                      min="0"
+                      max="30"
                     />
                   </div>
                 </div>
@@ -294,55 +366,89 @@
                     class="w-full mt-1 border-slate-300"
                     name="tutor1_vivienda"
                   >
-                    <option>Propia</option>
-                    <option>Rentada</option>
+                    <option value="">Selecciona una opción</option>
+                    <option value="PROPIA">Propia</option>
+                    <option value="RENTADA">Rentada</option>
+                    <option value="PRESTADA">Prestada</option>
+                    <option value="FAMILIAR">Con familiares</option>
+                    <option value="INFORMAL">En albergue / institución</option>
                   </select>
                 </div>
                 <div>
+                  <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                    <input class="text-primary h-4 w-4" name="tutor1_sin_empleo" type="checkbox" />
+                    <span>No tiene empleo</span>
+                  </label>
                   <label class="text-xs font-bold text-slate-500 uppercase"
                     >Fuente Empleo</label
                   ><input
                     class="w-full mt-1 border-slate-300"
                     name="tutor1_fuente_empleo"
                     type="text"
+                    maxlength="80"
                   />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <label class="text-xs font-bold text-slate-500 uppercase"
-                      >Antigüedad</label
-                    ><input
-                      class="w-full mt-1 border-slate-300"
-                      name="tutor1_antiguedad"
-                      type="text"
-                    />
+                      >Antigüedad (años)</label
+                    ><input class="w-full mt-1 border-slate-300" name="tutor1_antiguedad_anios" type="number" min="0" max="50" />
                   </div>
                   <div>
                     <label class="text-xs font-bold text-slate-500 uppercase"
-                      >Ingreso Mensual</label
-                    ><input
-                      class="w-full mt-1 border-slate-300"
-                      name="tutor1_ingreso_mensual"
-                      type="text"
-                    />
+                      >Antigüedad (meses)</label
+                    ><input class="w-full mt-1 border-slate-300" name="tutor1_antiguedad_meses_extra" type="number" min="0" max="11" />
                   </div>
                 </div>
-                <div class="flex gap-6 mt-4">
-                  <label class="inline-flex items-center"
-                    ><input
-                      class="text-primary h-4 w-4"
-                      name="tutor1_imss"
-                      type="checkbox"
-                    /><span class="ml-2 text-sm">IMSS</span></label
-                  >
-                  <label class="inline-flex items-center"
-                    ><input
-                      class="text-primary h-4 w-4"
-                      name="tutor1_infonavit"
-                      type="checkbox"
-                    /><span class="ml-2 text-sm">INFONAVIT</span></label
-                  >
+                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2">
+                  <input class="text-primary h-4 w-4" name="tutor1_antiguedad_no_aplica" type="checkbox" />
+                  <span>No aplica antigüedad</span>
+                </label>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase"
+                    >Ingreso Mensual</label
+                  ><input class="w-full mt-1 border-slate-300" name="tutor1_ingreso_mensual" type="text" />
                 </div>
+                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2">
+                  <input class="text-primary h-4 w-4" name="tutor1_otras_fuentes_aplica" type="checkbox" />
+                  <span>Tiene otras fuentes de ingreso</span>
+                </label>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase">Otra fuente</label>
+                  <input class="w-full mt-1 border-slate-300" name="tutor1_otras_fuentes_ingreso" type="text" maxlength="100" disabled />
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase">Monto adicional</label>
+                  <input class="w-full mt-1 border-slate-300" name="tutor1_monto_otras_fuentes" type="text" disabled />
+                </div>
+                <fieldset class="mt-4">
+                  <legend class="text-xs font-bold text-slate-500 uppercase">IMSS</legend>
+                  <div class="flex gap-4 mt-1">
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor1_imss" value="SI" class="text-primary" /> Sí
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor1_imss" value="NO" class="text-primary" /> No
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor1_imss" value="NO_APLICA" class="text-primary" /> No aplica
+                    </label>
+                  </div>
+                </fieldset>
+                <fieldset class="mt-3">
+                  <legend class="text-xs font-bold text-slate-500 uppercase">INFONAVIT</legend>
+                  <div class="flex gap-4 mt-1">
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor1_infonavit" value="SI" class="text-primary" /> Sí
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor1_infonavit" value="NO" class="text-primary" /> No
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor1_infonavit" value="NO_APLICA" class="text-primary" /> No aplica
+                    </label>
+                  </div>
+                </fieldset>
               </div>
             </div>
             <!-- Tutor 2 -->
@@ -362,6 +468,8 @@
                     class="w-full mt-1 border-slate-300"
                     name="tutor2_nombre"
                     type="text"
+                    minlength="3"
+                    maxlength="120"
                   />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -372,16 +480,28 @@
                       class="w-full mt-1 border-slate-300"
                       name="tutor2_edad"
                       type="number"
+                      min="18"
+                      max="100"
                     />
                   </div>
                   <div>
                     <label class="text-xs font-bold text-slate-500 uppercase"
                       >Estudios</label
-                    ><input
+                    >
+                    <select
                       class="w-full mt-1 border-slate-300"
                       name="tutor2_nivel_estudios"
-                      type="text"
-                    />
+                    >
+                      <option value="">Selecciona una opción</option>
+                      <option value="NINGUNO">Sin estudios</option>
+                      <option value="PRIMARIA">Primaria</option>
+                      <option value="SECUNDARIA">Secundaria</option>
+                      <option value="BACHILLERATO">Bachillerato / Preparatoria</option>
+                      <option value="TECNICO">Carrera Técnica / TSU</option>
+                      <option value="LICENCIATURA">Licenciatura / Ingeniería</option>
+                      <option value="MAESTRIA">Maestría</option>
+                      <option value="DOCTORADO">Doctorado</option>
+                    </select>
                   </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -394,9 +514,11 @@
                       name="tutor2_estado_civil"
                     >
                       <option value="">Selecciona una opción</option>
-                      <option>Casado</option>
-                      <option>Soltero</option>
-                      <option>Viudo</option>
+                      <option value="SOLTERO">Soltero / Soltera</option>
+                      <option value="CASADO">Casado / Casada</option>
+                      <option value="VIUDO">Viudo / Viuda</option>
+                      <option value="DIVORCIADO">Divorciado / Divorciada</option>
+                      <option value="UNION_LIBRE">Unión libre</option>
                     </select>
                   </div>
                   <div>
@@ -406,6 +528,8 @@
                       class="w-full mt-1 border-slate-300"
                       name="tutor2_num_hijos"
                       type="number"
+                      min="0"
+                      max="30"
                     />
                   </div>
                 </div>
@@ -417,55 +541,89 @@
                     class="w-full mt-1 border-slate-300"
                     name="tutor2_vivienda"
                   >
-                    <option>Propia</option>
-                    <option>Rentada</option>
+                    <option value="">Selecciona una opción</option>
+                    <option value="PROPIA">Propia</option>
+                    <option value="RENTADA">Rentada</option>
+                    <option value="PRESTADA">Prestada</option>
+                    <option value="FAMILIAR">Con familiares</option>
+                    <option value="INFORMAL">En albergue / institución</option>
                   </select>
                 </div>
                 <div>
+                  <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                    <input class="text-primary h-4 w-4" name="tutor2_sin_empleo" type="checkbox" />
+                    <span>No tiene empleo</span>
+                  </label>
                   <label class="text-xs font-bold text-slate-500 uppercase"
                     >Fuente Empleo</label
                   ><input
                     class="w-full mt-1 border-slate-300"
                     name="tutor2_fuente_empleo"
                     type="text"
+                    maxlength="80"
                   />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <label class="text-xs font-bold text-slate-500 uppercase"
-                      >Antigüedad</label
-                    ><input
-                      class="w-full mt-1 border-slate-300"
-                      name="tutor2_antiguedad"
-                      type="text"
-                    />
+                      >Antigüedad (años)</label
+                    ><input class="w-full mt-1 border-slate-300" name="tutor2_antiguedad_anios" type="number" min="0" max="50" />
                   </div>
                   <div>
                     <label class="text-xs font-bold text-slate-500 uppercase"
-                      >Ingreso Mensual</label
-                    ><input
-                      class="w-full mt-1 border-slate-300"
-                      name="tutor2_ingreso_mensual"
-                      type="text"
-                    />
+                      >Antigüedad (meses)</label
+                    ><input class="w-full mt-1 border-slate-300" name="tutor2_antiguedad_meses_extra" type="number" min="0" max="11" />
                   </div>
                 </div>
-                <div class="flex gap-6 mt-4">
-                  <label class="inline-flex items-center"
-                    ><input
-                      class="text-primary h-4 w-4"
-                      name="tutor2_imss"
-                      type="checkbox"
-                    /><span class="ml-2 text-sm">IMSS</span></label
-                  >
-                  <label class="inline-flex items-center"
-                    ><input
-                      class="text-primary h-4 w-4"
-                      name="tutor2_infonavit"
-                      type="checkbox"
-                    /><span class="ml-2 text-sm">INFONAVIT</span></label
-                  >
+                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2">
+                  <input class="text-primary h-4 w-4" name="tutor2_antiguedad_no_aplica" type="checkbox" />
+                  <span>No aplica antigüedad</span>
+                </label>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase"
+                    >Ingreso Mensual</label
+                  ><input class="w-full mt-1 border-slate-300" name="tutor2_ingreso_mensual" type="text" />
                 </div>
+                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2">
+                  <input class="text-primary h-4 w-4" name="tutor2_otras_fuentes_aplica" type="checkbox" />
+                  <span>Tiene otras fuentes de ingreso</span>
+                </label>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase">Otra fuente</label>
+                  <input class="w-full mt-1 border-slate-300" name="tutor2_otras_fuentes_ingreso" type="text" maxlength="100" disabled />
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase">Monto adicional</label>
+                  <input class="w-full mt-1 border-slate-300" name="tutor2_monto_otras_fuentes" type="text" disabled />
+                </div>
+                <fieldset class="mt-4">
+                  <legend class="text-xs font-bold text-slate-500 uppercase">IMSS</legend>
+                  <div class="flex gap-4 mt-1">
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor2_imss" value="SI" class="text-primary" /> Sí
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor2_imss" value="NO" class="text-primary" /> No
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor2_imss" value="NO_APLICA" class="text-primary" /> No aplica
+                    </label>
+                  </div>
+                </fieldset>
+                <fieldset class="mt-3">
+                  <legend class="text-xs font-bold text-slate-500 uppercase">INFONAVIT</legend>
+                  <div class="flex gap-4 mt-1">
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor2_infonavit" value="SI" class="text-primary" /> Sí
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor2_infonavit" value="NO" class="text-primary" /> No
+                    </label>
+                    <label class="inline-flex items-center gap-1">
+                      <input type="radio" name="tutor2_infonavit" value="NO_APLICA" class="text-primary" /> No aplica
+                    </label>
+                  </div>
+                </fieldset>
               </div>
             </div>
           </div>
@@ -480,27 +638,6 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700"
-                >Otras fuentes de ingresos</label
-              >
-              <input
-                class="w-full border-slate-300"
-                name="otras_fuentes_ingreso"
-                type="text"
-              />
-            </div>
-            <div class="space-y-2">
-              <label class="block text-sm font-semibold text-slate-700"
-                >Monto ($)</label
-              >
-              <input
-                class="w-full border-slate-300"
-                name="monto_otras_fuentes"
-                placeholder="0.00"
-                type="text"
-              />
-            </div>
-            <div class="space-y-2">
-              <label class="block text-sm font-semibold text-slate-700"
                 >¿El paciente ha tenido silla previamente?</label
               >
               <select class="w-full border-slate-300" name="silla_previa">
@@ -512,21 +649,21 @@
               <label class="block text-sm font-semibold text-slate-700"
                 >¿Cómo la obtuvo?</label
               >
-              <input
+              <select
                 class="w-full border-slate-300"
                 name="como_obtuvo_silla"
-                type="text"
-              />
+                disabled
+              >
+                <option value="">Selecciona una opción</option>
+                <option value="COMPRA">Compra</option>
+                <option value="DONACION">Donación</option>
+              </select>
             </div>
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700"
                 >Elaboró el estudio</label
               >
-              <input
-                class="w-full border-slate-300"
-                name="elaboro_estudio"
-                type="text"
-              />
+              <input class="w-full border-slate-300 bg-slate-100" name="elaboro_estudio" type="text" readonly />
             </div>
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-slate-700"
@@ -542,7 +679,11 @@
               <label class="block text-sm font-semibold text-slate-700"
                 >Sede</label
               >
-              <input class="w-full border-slate-300" name="sede" type="text" />
+              <input class="w-full border-slate-300 bg-slate-100" name="sede" type="text" readonly />
+            </div>
+            <div class="md:col-span-2 space-y-2">
+              <label class="block text-sm font-semibold text-slate-700">Ciudad del registro</label>
+              <input class="w-full border-slate-300 bg-slate-100" name="ciudad_registro" type="text" readonly />
             </div>
           </div>
         </section>
@@ -598,10 +739,24 @@
       </form>
     </main>
     <script data-purpose="form-logic">
+      const NIVEL_ESTUDIOS_CATALOG = [
+        "NINGUNO", "PRIMARIA", "SECUNDARIA", "BACHILLERATO",
+        "TECNICO", "LICENCIATURA", "MAESTRIA", "DOCTORADO",
+      ];
+      const COMO_OBTUVO_SILLA_CATALOG = ["COMPRA", "DONACION"];
+
+      function setCatalogSelectValue(name, val, catalog) {
+        const el = document.querySelector(`[name="${name}"]`);
+        if (!el || val == null) return;
+        el.value = catalog.includes(val) ? val : "";
+      }
+
       const MONETARY_FIELD_IDS = [
         "tutor1_ingreso_mensual",
         "tutor2_ingreso_mensual",
-        "monto_otras_fuentes",
+      ];
+      const ESTADOS_INEGI = [
+        ["01","AGUASCALIENTES"],["02","BAJA CALIFORNIA"],["03","BAJA CALIFORNIA SUR"],["04","CAMPECHE"],["05","COAHUILA"],["06","COLIMA"],["07","CHIAPAS"],["08","CHIHUAHUA"],["09","CIUDAD DE MEXICO"],["10","DURANGO"],["11","GUANAJUATO"],["12","GUERRERO"],["13","HIDALGO"],["14","JALISCO"],["15","ESTADO DE MEXICO"],["16","MICHOACAN"],["17","MORELOS"],["18","NAYARIT"],["19","NUEVO LEON"],["20","OAXACA"],["21","PUEBLA"],["22","QUERETARO"],["23","QUINTANA ROO"],["24","SAN LUIS POTOSI"],["25","SINALOA"],["26","SONORA"],["27","TABASCO"],["28","TAMAULIPAS"],["29","TLAXCALA"],["30","VERACRUZ"],["31","YUCATAN"],["32","ZACATECAS"]
       ];
 
       function sanitizeMoneyInput(raw) {
@@ -643,6 +798,25 @@
           return null;
         }
 
+        const numberValue = Number(sanitized);
+        return Number.isFinite(numberValue) ? numberValue : null;
+      }
+
+      // Integer-only variants for ingreso_mensual (RF-03)
+      function sanitizeIntegerInput(raw) {
+        if (raw == null) return "";
+        return String(raw).replace(/,/g, "").replace(/\D/g, "");
+      }
+
+      function formatIntegerDisplay(raw) {
+        const sanitized = sanitizeIntegerInput(raw);
+        if (!sanitized) return "";
+        return sanitized.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      function toIntegerOrNull(raw) {
+        const sanitized = sanitizeIntegerInput(raw);
+        if (!sanitized) return null;
         const numberValue = Number(sanitized);
         return Number.isFinite(numberValue) ? numberValue : null;
       }
@@ -713,11 +887,98 @@
           if (!input) return;
 
           input.addEventListener("input", () => {
-            input.value = formatMoneyDisplay(input.value);
+            input.value = formatIntegerDisplay(input.value);
           });
 
-          input.value = formatMoneyDisplay(input.value);
+          input.value = formatIntegerDisplay(input.value);
         });
+      }
+
+      function setupEstadosCatalog() {
+        const sel = document.getElementById("estado_codigo");
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Selecciona</option>';
+        ESTADOS_INEGI.forEach(([code, name]) => {
+          const opt = document.createElement("option");
+          opt.value = code;
+          opt.textContent = `${name} (${code})`;
+          sel.appendChild(opt);
+        });
+      }
+
+      function setupTutorConditionalFields() {
+        [1, 2].forEach((num) => {
+          const sinEmpleo = document.querySelector(`[name="tutor${num}_sin_empleo"]`);
+          const fuente = document.querySelector(`[name="tutor${num}_fuente_empleo"]`);
+          const ingreso = document.querySelector(`[name="tutor${num}_ingreso_mensual"]`);
+          const antiguedadNoAplica = document.querySelector(`[name="tutor${num}_antiguedad_no_aplica"]`);
+          const antiguedadAnios = document.querySelector(`[name="tutor${num}_antiguedad_anios"]`);
+          const antiguedadMeses = document.querySelector(`[name="tutor${num}_antiguedad_meses_extra"]`);
+          const otrasAplica = document.querySelector(`[name="tutor${num}_otras_fuentes_aplica"]`);
+          const otrasFuente = document.querySelector(`[name="tutor${num}_otras_fuentes_ingreso"]`);
+          const otrasMonto = document.querySelector(`[name="tutor${num}_monto_otras_fuentes"]`);
+
+          const applySinEmpleo = () => {
+            const checked = !!sinEmpleo?.checked;
+            if (fuente) {
+              fuente.disabled = checked;
+              if (checked) fuente.value = "";
+            }
+            if (ingreso) {
+              ingreso.disabled = checked;
+              if (checked) ingreso.value = "0";
+            }
+          };
+
+          const applyAntiguedad = () => {
+            const checked = !!antiguedadNoAplica?.checked;
+            if (antiguedadAnios) {
+              antiguedadAnios.disabled = checked;
+              if (checked) antiguedadAnios.value = "";
+            }
+            if (antiguedadMeses) {
+              antiguedadMeses.disabled = checked;
+              if (checked) antiguedadMeses.value = "";
+            }
+          };
+
+          const applyOtras = () => {
+            const checked = !!otrasAplica?.checked;
+            if (otrasFuente) {
+              otrasFuente.disabled = !checked;
+              if (!checked) otrasFuente.value = "";
+            }
+            if (otrasMonto) {
+              otrasMonto.disabled = !checked;
+              if (!checked) otrasMonto.value = "";
+            }
+          };
+
+          sinEmpleo?.addEventListener("change", applySinEmpleo);
+          antiguedadNoAplica?.addEventListener("change", applyAntiguedad);
+          otrasAplica?.addEventListener("change", applyOtras);
+          applySinEmpleo();
+          applyAntiguedad();
+          applyOtras();
+        });
+      }
+
+      function setupSillaPreviaConditionalField() {
+        const sillaPrevia = document.querySelector('[name="silla_previa"]');
+        const comoObtuvo = document.querySelector('[name="como_obtuvo_silla"]');
+        if (!sillaPrevia || !comoObtuvo) return;
+
+        const apply = () => {
+          const hasPreviousChair = sillaPrevia.value === "Sí";
+          comoObtuvo.disabled = !hasPreviousChair;
+          comoObtuvo.required = hasPreviousChair;
+          if (!hasPreviousChair) {
+            comoObtuvo.selectedIndex = 0;
+          }
+        };
+
+        sillaPrevia.addEventListener("change", apply);
+        apply();
       }
 
       // Auth guard + Draft Resume
@@ -730,6 +991,13 @@
           window.location.href = "login.html";
           return;
         }
+
+        const elaboroEl = document.querySelector('[name="elaboro_estudio"]');
+        if (elaboroEl) elaboroEl.value = session.nombre || "";
+        const sedeEl = document.querySelector('[name="sede"]');
+        if (sedeEl) sedeEl.value = regionCtx.sede || "";
+        const ciudadRegEl = document.querySelector('[name="ciudad_registro"]');
+        if (ciudadRegEl) ciudadRegEl.value = regionCtx.region_nombre || "";
 
         // Draft Resume: Check if we have an estudio_id to restore
         const estudioId = localStorage.getItem("estudio_id");
@@ -752,18 +1020,45 @@
                   const el = document.querySelector(`[name="${name}"]`);
                   if (el && val != null) el.value = val;
                 };
-                setVal("nombre", b.nombre);
+                // Structured name: direct populate or legacy fallback
+                if (b.nombres != null && b.nombres !== "") {
+                  setVal("nombres", b.nombres);
+                  setVal("apellido_paterno", b.apellido_paterno || "");
+                  setVal("apellido_materno", b.apellido_materno || "");
+                } else if (b.nombre) {
+                  // Legacy draft: split nombre by spaces
+                  const parts = (b.nombre || "").trim().split(/\s+/).filter(Boolean);
+                  if (parts.length === 0) {
+                    setVal("nombres", "");
+                    setVal("apellido_paterno", "");
+                    setVal("apellido_materno", "");
+                  } else if (parts.length === 1) {
+                    setVal("nombres", parts[0]);
+                  } else if (parts.length === 2) {
+                    setVal("nombres", parts[0]);
+                    setVal("apellido_paterno", parts[1]);
+                  } else {
+                    setVal("apellido_materno", parts.pop());
+                    setVal("apellido_paterno", parts.pop());
+                    setVal("nombres", parts.join(" "));
+                  }
+                }
                 setVal("fecha_nacimiento", b.fecha_nacimiento);
                 setVal("diagnostico", b.diagnostico);
                 setVal("calle", b.calle);
                 setVal("colonia", b.colonia);
                 setVal("ciudad", b.ciudad);
+                setVal("num_ext", b.num_ext);
+                setVal("num_int", b.num_int);
+                setVal("estado_codigo", b.estado_codigo);
                 setVal("telefonos", b.telefonos);
+                const sexoEl = document.querySelector(`[name="sexo"][value="${b.sexo || "NE"}"]`);
+                if (sexoEl) sexoEl.checked = true;
               }
 
               // Pre-fill tutores
               if (data.tutores && data.tutores.length > 0) {
-                const ESTADO_CIVIL_CATALOG = ["Casado", "Soltero", "Viudo"];
+                const ESTADO_CIVIL_CATALOG = ["SOLTERO", "CASADO", "VIUDO", "DIVORCIADO", "UNION_LIBRE"];
                 const setEstadoCivilCatalogValue = (name, val) => {
                   const el = document.querySelector(`[name="${name}"]`);
                   if (!el) return;
@@ -780,9 +1075,23 @@
                     const el = document.querySelector(`[name="${name}"]`);
                     if (el) el.checked = val === 1 || val === true;
                   };
+                  const setTriestado = (name, raw) => {
+                    let value;
+                    if (raw === "SI" || raw === "NO" || raw === "NO_APLICA") {
+                      value = raw;
+                    } else if (raw === true || raw === 1) {
+                      value = "SI";
+                    } else if (raw === false || raw === 0) {
+                      value = "NO";
+                    } else {
+                      value = "NO_APLICA";
+                    }
+                    const radio = document.querySelector(`[name="${name}"][value="${value}"]`);
+                    if (radio) radio.checked = true;
+                  };
                   setVal(`tutor${num}_nombre`, t.nombre);
                   setVal(`tutor${num}_edad`, t.edad);
-                  setVal(`tutor${num}_nivel_estudios`, t.nivel_estudios);
+                  setCatalogSelectValue(`tutor${num}_nivel_estudios`, t.nivel_estudios, NIVEL_ESTUDIOS_CATALOG);
                   setEstadoCivilCatalogValue(
                     `tutor${num}_estado_civil`,
                     t.estado_civil,
@@ -790,16 +1099,23 @@
                   setVal(`tutor${num}_num_hijos`, t.num_hijos);
                   setVal(`tutor${num}_vivienda`, t.vivienda);
                   setVal(`tutor${num}_fuente_empleo`, t.fuente_empleo);
-                  setVal(`tutor${num}_antiguedad`, t.antiguedad);
+                  setVal(`tutor${num}_antiguedad_anios`, t.antiguedad_meses != null ? Math.floor(t.antiguedad_meses / 12) : "");
+                  setVal(`tutor${num}_antiguedad_meses_extra`, t.antiguedad_meses != null ? t.antiguedad_meses % 12 : "");
                   setVal(
                     `tutor${num}_ingreso_mensual`,
                     t.ingreso_mensual != null
-                      ? formatMoneyDisplay(String(t.ingreso_mensual))
+                      ? formatIntegerDisplay(String(t.ingreso_mensual))
                       : t.ingreso_mensual,
                   );
-                  setChecked(`tutor${num}_imss`, t.tiene_imss);
-                  setChecked(`tutor${num}_infonavit`, t.tiene_infonavit);
+                  setChecked(`tutor${num}_sin_empleo`, t.sin_empleo);
+                  setChecked(`tutor${num}_antiguedad_no_aplica`, !(t.antiguedad_aplica == null ? true : t.antiguedad_aplica));
+                  setChecked(`tutor${num}_otras_fuentes_aplica`, t.otras_fuentes_aplica);
+                  setVal(`tutor${num}_otras_fuentes_ingreso`, t.otras_fuentes_ingreso);
+                  setVal(`tutor${num}_monto_otras_fuentes`, t.monto_otras_fuentes != null ? formatMoneyDisplay(String(t.monto_otras_fuentes)) : t.monto_otras_fuentes);
+                  setTriestado(`tutor${num}_imss`, t.imss_estatus ?? t.tiene_imss);
+                  setTriestado(`tutor${num}_infonavit`, t.infonavit_estatus ?? t.tiene_infonavit);
                 });
+                setupTutorConditionalFields();
               }
 
               // Pre-fill estudio closing fields
@@ -807,21 +1123,16 @@
                 const el = document.querySelector(`[name="${name}"]`);
                 if (el && val != null) el.value = val;
               };
-              setVal("otras_fuentes_ingreso", data.otras_fuentes_ingreso);
-              setVal(
-                "monto_otras_fuentes",
-                data.monto_otras_fuentes != null
-                  ? formatMoneyDisplay(String(data.monto_otras_fuentes))
-                  : data.monto_otras_fuentes,
-              );
               setVal(
                 "silla_previa",
                 data.tuvo_silla_previa === 1 ? "Sí" : "No",
               );
-              setVal("como_obtuvo_silla", data.como_obtuvo_silla);
-              setVal("elaboro_estudio", data.elaboro_estudio);
+              setCatalogSelectValue("como_obtuvo_silla", data.como_obtuvo_silla, COMO_OBTUVO_SILLA_CATALOG);
+              document.querySelector('[name="silla_previa"]')?.dispatchEvent(new Event("change"));
+              setVal("elaboro_estudio", session.nombre);
               setVal("fecha_estudio", data.fecha_estudio);
               setVal("sede", data.sede);
+              setVal("ciudad_registro", data.ciudad_registro || regionCtx.region_nombre);
 
               // Also store beneficiario_id from the draft
               if (data.beneficiario_id) {
@@ -864,6 +1175,11 @@
           return isNaN(n) ? null : n;
         };
 
+        const getRadio = (name) => {
+          const sel = document.querySelector(`[name="${name}"]:checked`);
+          return sel ? sel.value : null;
+        };
+
         const tutores = [];
         tutores.push({
           numero_tutor: 1,
@@ -874,12 +1190,17 @@
           num_hijos: toIntOrNull(get("tutor1_num_hijos")) || 0,
           vivienda: get("tutor1_vivienda"),
           fuente_empleo: get("tutor1_fuente_empleo"),
-          antiguedad: get("tutor1_antiguedad"),
-          ingreso_mensual: toMoneyNumberOrNull(get("tutor1_ingreso_mensual")),
-          tiene_imss: f.querySelector('[name="tutor1_imss"]').checked,
-          tiene_infonavit: f.querySelector('[name="tutor1_infonavit"]').checked,
+          antiguedad_anios: toIntOrNull(get("tutor1_antiguedad_anios")) || 0,
+          antiguedad_meses_extra: toIntOrNull(get("tutor1_antiguedad_meses_extra")) || 0,
+          antiguedad_aplica: !f.querySelector('[name="tutor1_antiguedad_no_aplica"]').checked,
+          ingreso_mensual: toIntegerOrNull(get("tutor1_ingreso_mensual")),
+          sin_empleo: f.querySelector('[name="tutor1_sin_empleo"]').checked,
+          otras_fuentes_aplica: f.querySelector('[name="tutor1_otras_fuentes_aplica"]').checked,
+          otras_fuentes_ingreso: get("tutor1_otras_fuentes_ingreso"),
+          monto_otras_fuentes: toMoneyNumberOrNull(get("tutor1_monto_otras_fuentes")),
+          imss_estatus: getRadio("tutor1_imss"),
+          infonavit_estatus: getRadio("tutor1_infonavit"),
         });
-
         const tutor2Nombre = get("tutor2_nombre").trim();
         if (tutor2Nombre) {
           tutores.push({
@@ -891,35 +1212,44 @@
             num_hijos: toIntOrNull(get("tutor2_num_hijos")) || 0,
             vivienda: get("tutor2_vivienda"),
             fuente_empleo: get("tutor2_fuente_empleo"),
-            antiguedad: get("tutor2_antiguedad"),
-            ingreso_mensual: toMoneyNumberOrNull(get("tutor2_ingreso_mensual")),
-            tiene_imss: f.querySelector('[name="tutor2_imss"]').checked,
-            tiene_infonavit: f.querySelector('[name="tutor2_infonavit"]')
-              .checked,
+            antiguedad_anios: toIntOrNull(get("tutor2_antiguedad_anios")) || 0,
+            antiguedad_meses_extra: toIntOrNull(get("tutor2_antiguedad_meses_extra")) || 0,
+            antiguedad_aplica: !f.querySelector('[name="tutor2_antiguedad_no_aplica"]').checked,
+            ingreso_mensual: toIntegerOrNull(get("tutor2_ingreso_mensual")),
+            sin_empleo: f.querySelector('[name="tutor2_sin_empleo"]').checked,
+            otras_fuentes_aplica: f.querySelector('[name="tutor2_otras_fuentes_aplica"]').checked,
+            otras_fuentes_ingreso: get("tutor2_otras_fuentes_ingreso"),
+            monto_otras_fuentes: toMoneyNumberOrNull(get("tutor2_monto_otras_fuentes")),
+            imss_estatus: getRadio("tutor2_imss"),
+            infonavit_estatus: getRadio("tutor2_infonavit"),
           });
         }
 
         return {
           region_id: regionCtx.region_id,
           sede: regionCtx.sede,
+          ciudad_registro: regionCtx.region_nombre,
           beneficiario: {
-            nombre: get("nombre"),
+            nombres: get("nombres"),
+            apellido_paterno: get("apellido_paterno"),
+            apellido_materno: get("apellido_materno"),
             fecha_nacimiento: get("fecha_nacimiento"),
             diagnostico: get("diagnostico"),
             calle: get("calle"),
+            num_ext: get("num_ext"),
+            num_int: get("num_int"),
             colonia: get("colonia"),
             ciudad: get("ciudad"),
+            estado_codigo: get("estado_codigo"),
+            estado_nombre: ESTADOS_INEGI.find((x) => x[0] === get("estado_codigo"))?.[1] || null,
+            sexo: get("sexo"),
             telefonos: get("telefonos"),
           },
           tutores,
           estudio: {
-            otras_fuentes_ingreso: get("otras_fuentes_ingreso"),
-            monto_otras_fuentes: toMoneyNumberOrNull(
-              get("monto_otras_fuentes"),
-            ),
             tuvo_silla_previa: get("silla_previa") === "Sí",
             como_obtuvo_silla: get("como_obtuvo_silla"),
-            elaboro_estudio: get("elaboro_estudio"),
+            elaboro_estudio: null,
             fecha_estudio: get("fecha_estudio"),
             status,
           },
@@ -1042,6 +1372,9 @@
       // Guardar Borrador button
       setupMonetaryFieldFormatting();
       setupTelefonoSanitization();
+      setupEstadosCatalog();
+      setupTutorConditionalFields();
+      setupSillaPreviaConditionalField();
 
       document
         .querySelector('button[type="button"]')

@@ -217,12 +217,13 @@
               </select>
             </div>
             <div class="md:col-span-2 space-y-2">
-              <label class="block text-sm font-semibold text-slate-700"
-                >Observaciones Posturales (Escoliosis, Cifosis, etc.)</label
-              >
+                <label class="block text-sm font-semibold text-slate-700"
+                  >Observaciones Posturales (Escoliosis, Cifosis, etc.)</label
+                >
               <textarea
                 class="w-full border-slate-300 shadow-sm focus:border-primary focus:ring-primary"
                 name="observaciones_posturales"
+                maxlength="500"
                 placeholder="Describa brevemente la condición postural actual para ajustar el respaldo..."
                 rows="3"
               ></textarea>
@@ -260,8 +261,15 @@
               </svg>
             </div>
             <h2 class="text-xl font-semibold">
-              Medidas Técnicas para Sillas de Ruedas (Pulgadas)
+              Medidas Técnicas para Sillas de Ruedas
             </h2>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Unidad de medida</label>
+            <select name="unidad_medida" id="unidad_medida" class="w-full md:w-60 border-slate-300 shadow-sm focus:border-primary focus:ring-primary">
+              <option value="in">Pulgadas (in)</option>
+              <option value="cm">Centímetros (cm)</option>
+            </select>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <!-- Visual Aid -->
@@ -285,19 +293,22 @@
             <div class="space-y-5">
               <div class="measurement-input-group flex flex-col">
                 <label class="text-sm font-bold text-slate-700 mb-1"
-                  >Altura total (pulgadas)</label
+                  >Altura total (<span data-unit-label>in</span>)</label
                 >
                 <div class="flex items-center">
                   <input
                     class="flex-grow rounded-l-lg border-slate-300 focus:border-primary focus:ring-primary"
-                    name="altura_total_in"
-                    placeholder="0.0"
-                    type="number"
-                  />
+                     name="altura_total_in"
+                     placeholder="0.0"
+                     type="number"
+                     min="0"
+                     max="120"
+                     step="0.1"
+                   />
                   <span
                     class="bg-slate-200 border border-l-0 border-slate-300 px-4 py-2 rounded-r-lg text-slate-600 text-sm font-semibold"
-                    >in</span
-                  >
+                     ><span data-unit-suffix>in</span></span
+                   >
                 </div>
               </div>
               <div class="measurement-input-group flex flex-col">
@@ -307,10 +318,13 @@
                 <div class="flex items-center">
                   <input
                     class="flex-grow rounded-l-lg border-slate-300 focus:border-primary focus:ring-primary"
-                    name="peso_kg"
-                    placeholder="0.0"
-                    type="number"
-                  />
+                     name="peso_kg"
+                     placeholder="0.0"
+                     type="number"
+                     min="0"
+                     max="300"
+                     step="0.1"
+                   />
                   <span
                     class="bg-slate-200 border border-l-0 border-slate-300 px-4 py-2 rounded-r-lg text-slate-600 text-sm font-semibold"
                     >kg</span
@@ -319,87 +333,102 @@
               </div>
               <div class="measurement-input-group flex flex-col">
                 <label class="text-sm font-bold text-slate-700 mb-1"
-                  >1. Cabeza a Asiento (Pulgadas)</label
+                  >1. De la cabeza al asiento de la silla (<span data-unit-label>in</span>)</label
                 >
                 <div class="flex items-center">
                   <input
                     class="flex-grow rounded-l-lg border-slate-300 focus:border-primary focus:ring-primary"
-                    name="medida_cabeza_asiento"
-                    placeholder="0.0"
-                    type="number"
-                  />
+                     name="medida_cabeza_asiento"
+                     placeholder="0.0"
+                     type="number"
+                     min="0"
+                     max="60"
+                     step="0.1"
+                   />
                   <span
                     class="bg-slate-200 border border-l-0 border-slate-300 px-4 py-2 rounded-r-lg text-slate-600 text-sm font-semibold"
-                    >in</span
-                  >
+                     ><span data-unit-suffix>in</span></span
+                   >
                 </div>
               </div>
               <div class="measurement-input-group flex flex-col">
                 <label class="text-sm font-bold text-slate-700 mb-1"
-                  >2. Hombro a Asiento (Pulgadas)</label
+                  >2. Del hombro al asiento de la silla (<span data-unit-label>in</span>)</label
                 >
                 <div class="flex items-center">
                   <input
                     class="flex-grow rounded-l-lg border-slate-300 focus:border-primary focus:ring-primary"
-                    name="medida_hombro_asiento"
-                    placeholder="0.0"
-                    type="number"
-                  />
+                     name="medida_hombro_asiento"
+                     placeholder="0.0"
+                     type="number"
+                     min="0"
+                     max="60"
+                     step="0.1"
+                   />
                   <span
                     class="bg-slate-200 border border-l-0 border-slate-300 px-4 py-2 rounded-r-lg text-slate-600 text-sm font-semibold"
-                    >in</span
-                  >
+                     ><span data-unit-suffix>in</span></span
+                   >
                 </div>
               </div>
               <div class="measurement-input-group flex flex-col">
                 <label class="text-sm font-bold text-slate-700 mb-1"
-                  >3. Profundidad de Asiento (Poblitio)</label
+                  >3. De rodilla al respaldo de la silla (<span data-unit-label>in</span>)</label
                 >
                 <div class="flex items-center">
                   <input
                     class="flex-grow rounded-l-lg border-slate-300 focus:border-primary focus:ring-primary"
-                    name="medida_prof_asiento"
-                    placeholder="0.0"
-                    type="number"
-                  />
+                     name="medida_prof_asiento"
+                     placeholder="0.0"
+                     type="number"
+                     min="0"
+                     max="60"
+                     step="0.1"
+                   />
                   <span
                     class="bg-slate-200 border border-l-0 border-slate-300 px-4 py-2 rounded-r-lg text-slate-600 text-sm font-semibold"
-                    >in</span
-                  >
+                     ><span data-unit-suffix>in</span></span
+                   >
                 </div>
               </div>
               <div class="measurement-input-group flex flex-col">
                 <label class="text-sm font-bold text-slate-700 mb-1"
-                  >4. Pierna (Rodilla a Talón)</label
+                  >4. De rodilla al suelo (<span data-unit-label>in</span>)</label
                 >
                 <div class="flex items-center">
                   <input
                     class="flex-grow rounded-l-lg border-slate-300 focus:border-primary focus:ring-primary"
-                    name="medida_rodilla_talon"
-                    placeholder="0.0"
-                    type="number"
-                  />
+                     name="medida_rodilla_talon"
+                     placeholder="0.0"
+                     type="number"
+                     min="0"
+                     max="60"
+                     step="0.1"
+                   />
                   <span
                     class="bg-slate-200 border border-l-0 border-slate-300 px-4 py-2 rounded-r-lg text-slate-600 text-sm font-semibold"
-                    >in</span
-                  >
+                     ><span data-unit-suffix>in</span></span
+                   >
                 </div>
               </div>
               <div class="measurement-input-group flex flex-col">
                 <label class="text-sm font-bold text-slate-700 mb-1"
-                  >5. Ancho de Cadera (Asiento)</label
+                  >5. Ancho de cadera (<span data-unit-label>in</span>)</label
                 >
                 <div class="flex items-center">
                   <input
                     class="flex-grow rounded-l-lg border-slate-300 focus:border-primary focus:ring-primary"
-                    name="medida_ancho_cadera"
-                    placeholder="0.0"
-                    type="number"
-                  />
+                     name="medida_ancho_cadera"
+                     placeholder="0.0"
+                     type="number"
+                     min="0"
+                     max="40"
+                     step="0.1"
+                   />
                   <span
                     class="bg-slate-200 border border-l-0 border-slate-300 px-4 py-2 rounded-r-lg text-slate-600 text-sm font-semibold"
-                    >in</span
-                  >
+                     ><span data-unit-suffix>in</span></span
+                   >
                 </div>
               </div>
             </div>
@@ -638,6 +667,7 @@
               setVal("medida_prof_asiento", data.medida_prof_asiento);
               setVal("medida_rodilla_talon", data.medida_rodilla_talon);
               setVal("medida_ancho_cadera", data.medida_ancho_cadera);
+              setVal("unidad_medida", data.unidad_captura || "in");
 
               // Set text fields
               setVal("entidad_solicitante", data.entidad_solicitante);
@@ -798,6 +828,7 @@
           medida_prof_asiento: toFloatOrNull(get("medida_prof_asiento")),
           medida_rodilla_talon: toFloatOrNull(get("medida_rodilla_talon")),
           medida_ancho_cadera: toFloatOrNull(get("medida_ancho_cadera")),
+          unidad_medida: get("unidad_medida") || "in",
           foto_url,
           entidad_solicitante: get("entidad_solicitante"),
           prioridad: get("prioridad"),
@@ -880,7 +911,24 @@
         }
       }
 
+      function setupUnidadMedidaLabels() {
+        const sel = document.getElementById("unidad_medida");
+        if (!sel) return;
+        const apply = () => {
+          const unit = sel.value || "in";
+          document.querySelectorAll("[data-unit-suffix]").forEach((el) => {
+            el.textContent = unit;
+          });
+          document.querySelectorAll("[data-unit-label]").forEach((el) => {
+            el.textContent = unit;
+          });
+        };
+        sel.addEventListener("change", apply);
+        apply();
+      }
+
       setupPhotoPreview();
+      setupUnidadMedidaLabels();
 
       // Guardar Borrador button
       document

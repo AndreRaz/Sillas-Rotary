@@ -362,12 +362,19 @@ def sample_estudio(client, capturista_user, region_lon, pais_mx) -> dict:
         "region_id": region_lon["id"],
         "sede": "León sede Forum",
         "beneficiario": {
-            "nombre": "Beneficiario Test",
+            "nombres": "BENEFICIARIO",
+            "apellido_paterno": "TEST",
+            "apellido_materno": "MUESTRA",
             "fecha_nacimiento": "2000-01-15",
             "diagnostico": "Parálisis cerebral",
             "calle": "Calle Test 123",
+            "num_ext": "12A",
+            "num_int": "3",
             "colonia": "Centro",
             "ciudad": "León",
+            "estado_codigo": "11",
+            "estado_nombre": "GUANAJUATO",
+            "sexo": "M",
             "telefonos": "4621234567",
         },
         "tutores": [
@@ -375,13 +382,13 @@ def sample_estudio(client, capturista_user, region_lon, pais_mx) -> dict:
                 "numero_tutor": 1,
                 "nombre": "Tutor Test",
                 "edad": 45,
-                "nivel_estudios": "Licenciatura",
-                "estado_civil": "Casado",
+                "nivel_estudios": "LICENCIATURA",
+                "estado_civil": "CASADO",
                 "num_hijos": 2,
-                "vivienda": "Propia",
+                "vivienda": "PROPIA",
                 "fuente_empleo": "Empleado",
                 "antiguedad": "10 años",
-                "ingreso_mensual": 12000.0,
+                "ingreso_mensual": 12000,
                 "tiene_imss": True,
                 "tiene_infonavit": False,
             }
@@ -395,6 +402,7 @@ def sample_estudio(client, capturista_user, region_lon, pais_mx) -> dict:
             "fecha_estudio": "2026-04-18",
             "status": "completo",
         },
+        "ciudad_registro": "LEON, GTO",
     }
     res = client.post("/api/estudios", json=payload, headers=headers)
     assert res.status_code == 201, f"sample_estudio failed: {res.text}"

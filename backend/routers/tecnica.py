@@ -108,6 +108,7 @@ class SolicitudCreateRequest(BaseModel):
     control_tronco: str
     control_cabeza: str
     observaciones_posturales: Optional[str] = None
+    unidad_medida: str = "in"
     altura_total_in: Optional[float] = None
     peso_kg: Optional[float] = None
     medida_cabeza_asiento: Optional[float] = None
@@ -127,8 +128,15 @@ class SolicitudCreateRequest(BaseModel):
                      "medida_rodilla_talon", "medida_ancho_cadera")
     @classmethod
     def medida_positiva(cls, v: Optional[float]) -> Optional[float]:
-        if v is not None and v <= 0:
-            raise ValueError("La medida debe ser mayor que 0")
+        if v is not None and (v < 0 or v > 999.999):
+            raise ValueError("La medida debe estar entre 0 y 999.999")
+        return v
+
+    @field_validator("unidad_medida")
+    @classmethod
+    def unidad_valida(cls, v: str) -> str:
+        if v not in ("in", "cm"):
+            raise ValueError("unidad_medida debe ser in o cm")
         return v
 
     @field_validator("status")
@@ -157,6 +165,7 @@ class SolicitudUpdateRequest(BaseModel):
     control_tronco: Optional[str] = None
     control_cabeza: Optional[str] = None
     observaciones_posturales: Optional[str] = None
+    unidad_medida: Optional[str] = None
     altura_total_in: Optional[float] = None
     peso_kg: Optional[float] = None
     medida_cabeza_asiento: Optional[float] = None
@@ -176,6 +185,22 @@ class SolicitudUpdateRequest(BaseModel):
     def status_valido(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and v not in ("borrador", "completo"):
             raise ValueError("status debe ser 'borrador' o 'completo'")
+        return v
+
+    @field_validator("altura_total_in", "peso_kg", "medida_cabeza_asiento",
+                     "medida_hombro_asiento", "medida_prof_asiento",
+                     "medida_rodilla_talon", "medida_ancho_cadera")
+    @classmethod
+    def medida_positiva(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and (v < 0 or v > 999.999):
+            raise ValueError("La medida debe estar entre 0 y 999.999")
+        return v
+
+    @field_validator("unidad_medida")
+    @classmethod
+    def unidad_valida(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("in", "cm"):
+            raise ValueError("unidad_medida debe ser in o cm")
         return v
 
     @field_validator("prioridad")
@@ -336,6 +361,7 @@ def crear_solicitud(
     db: Annotated[_DBAdapter, Depends(get_db)],
     usuario: Annotated[CurrentUser, Depends(require_roles("capturista", "tecnico", "admin"))],
 ) -> SolicitudCreateResponse:
+    body = _normalize_medidas(body)
     resolved_foto_path, resolved_foto_url = _resolve_foto_refs(
         foto_path=body.foto_path,
         foto_url=body.foto_url,
@@ -348,9 +374,9 @@ def crear_solicitud(
                 (beneficiario_id, usuario_id, entorno, control_tronco, control_cabeza,
                  observaciones_posturales, altura_total_in, peso_kg,
                  medida_cabeza_asiento, medida_hombro_asiento, medida_prof_asiento,
-                 medida_rodilla_talon, medida_ancho_cadera, foto_url,
+                 medida_rodilla_talon, medida_ancho_cadera, unidad_captura, foto_url,
                  entidad_solicitante, prioridad, justificacion, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -367,6 +393,7 @@ def crear_solicitud(
                 body.medida_prof_asiento,
                 body.medida_rodilla_talon,
                 body.medida_ancho_cadera,
+                body.unidad_medida,
                 resolved_foto_url,
                 body.entidad_solicitante,
                 body.prioridad,
@@ -426,6 +453,8 @@ def actualizar_solicitud(
     assert_resource_owner(existing["usuario_id"], usuario)
 
     fields = body.model_dump(exclude_none=True)
+    if fields.get("unidad_medida") in ("cm", "in"):
+        fields = _normalize_medidas_patch(fields)
 
     resolved_foto_path, resolved_foto_url = _resolve_foto_refs(
         foto_path=fields.pop("foto_path", None),
@@ -471,6 +500,30 @@ def actualizar_solicitud(
         status=row["status"],
         updated_at=row["updated_at"].isoformat(),
     )
+
+
+def _to_inches(v: Optional[float], unidad: str) -> Optional[float]:
+    if v is None:
+        return None
+    if unidad == "cm":
+        return round(v / 2.54, 3)
+    return v
+
+
+def _normalize_medidas(body: SolicitudCreateRequest) -> SolicitudCreateRequest:
+    data = body.model_dump()
+    unidad = data.get("unidad_medida", "in")
+    for key in ("altura_total_in", "medida_cabeza_asiento", "medida_hombro_asiento", "medida_prof_asiento", "medida_rodilla_talon", "medida_ancho_cadera"):
+        data[key] = _to_inches(data.get(key), unidad)
+    return SolicitudCreateRequest(**data)
+
+
+def _normalize_medidas_patch(fields: dict) -> dict:
+    unidad = fields.get("unidad_medida", "in")
+    for key in ("altura_total_in", "medida_cabeza_asiento", "medida_hombro_asiento", "medida_prof_asiento", "medida_rodilla_talon", "medida_ancho_cadera"):
+        if key in fields:
+            fields[key] = _to_inches(fields[key], unidad)
+    return fields
 
 
 @router.get("/solicitudes/{id}/foto")
